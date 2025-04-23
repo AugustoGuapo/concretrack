@@ -25,4 +25,4 @@ Aplicación para registrar datos de ensayos de fractura para concreto. Diseñado
 - Guillermo Jose Castaño Paternina
 - Maryi Rodriguez Brieva
 - Oscar David Padilla Rivas
-- Sebastian Arizal
+- Sebastian Arizal Muñoz
