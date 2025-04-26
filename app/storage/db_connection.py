@@ -9,7 +9,6 @@ def create_connection(db_file='app/storage/database.db'):
         return conn
     except sqlite3.Error as e:
         print(e)
-    return conn
 
 def create_database(conn):
     cursor = conn.cursor()
