@@ -8,6 +8,7 @@ from app.core.interfaces.password_hasher_interface import (
     PasswordHasherInterface
 )
 
+
 class AuthenticationService:
     def __init__(self, usersRepositoryInterface: UsersRepositoryInterface,
                  passwordHasherInterface: PasswordHasherInterface):
