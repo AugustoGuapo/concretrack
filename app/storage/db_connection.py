@@ -1,5 +1,6 @@
 import sqlite3
 
+
 def create_connection(db_file='app/storage/database.db'):
     """ create a database connection to a SQLite database """
     conn = None
@@ -9,6 +10,7 @@ def create_connection(db_file='app/storage/database.db'):
         return conn
     except sqlite3.Error as e:
         print(e)
+
 
 def create_database(conn):
     cursor = conn.cursor()
@@ -43,7 +45,4 @@ def create_database(conn):
         FOREIGN KEY (operative) REFERENCES users(id)
     );
     """)
-
     conn.commit()
-
-create_connection('app/storage/database.db')
