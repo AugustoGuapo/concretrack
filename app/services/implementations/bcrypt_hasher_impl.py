@@ -1,5 +1,8 @@
 import bcrypt
-from app.core.interfaces.password_hasher_interface import PasswordHasherInterface
+from app.core.interfaces.password_hasher_interface import (
+    PasswordHasherInterface
+)
+
 
 class BcryptHasherImpl(PasswordHasherInterface):
     def hash(self, password: str) -> str:
