@@ -1,7 +1,9 @@
 import pytest
 from typing import Optional
 from app.core.interfaces.users_repository_interface import (
-    UsersRepositoryInterface,
+    UsersRepositoryInterface
+)
+from app.core.interfaces.password_hasher_interface import (
     PasswordHasherInterface
 )
 from app.models.user import User

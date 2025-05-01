@@ -2,10 +2,11 @@ from app.models.user import User
 import random
 import logging
 from app.core.interfaces.users_repository_interface import (
-    UsersRepositoryInterface,
+    UsersRepositoryInterface
+)
+from app.core.interfaces.password_hasher_interface import (
     PasswordHasherInterface
 )
-
 
 class AuthenticationService:
     def __init__(self, usersRepositoryInterface: UsersRepositoryInterface,
@@ -34,7 +35,7 @@ class AuthenticationService:
 
     def generateUsername(self, firstName: str, lastName: str) -> str:
         username = f"{firstName.lower()}.{lastName.lower()}"
-        + f".{random.randint(100, 999)}"
+        username += f".{random.randint(100, 999)}"
         if self.usersRepositoryInterface.existsUsername(username):
             logging.error(f"Username {username} already exists.")
             return self.generateUsername(firstName, lastName)
