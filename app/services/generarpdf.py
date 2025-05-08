@@ -1,35 +1,23 @@
 from fpdf import FPDF
 
-
-def generarpdf(datos, reporte):
-    if not datos:
-        print("No hay datos para generar el PDF.")
-        return
-
+def generatorpdf(data, keys, name, title="Reporte de Datos"):
     pdf = FPDF()
     pdf.add_page()
 
-    # Título del reporte
+    # Título del reporte 
     pdf.set_font("Arial", style="B", size=14)
-    pdf.cell(200, 10, txt="Reporte de Datos", ln=True, align="C")
-    pdf.ln(10)  # espacio
+    pdf.cell(200, 10, txt=title, ln=True, align="C")
 
-    pdf.set_font("Arial", size=12)
-
-    # Encabezado dinámico
-    claves = list(datos[0].keys())
-    encabezado = " | ".join(claves)
+    # Encabezados de columnas
+    pdf.set_font("Arial", style="B", size=12)
+    encabezado = " | ".join(keys)
     pdf.cell(200, 10, txt=encabezado, ln=True)
 
-    # Línea por línea de datos
-    for item in datos:
-        # Verifica si necesita agregar nueva página
-        if pdf.get_y() > 270:
-            pdf.add_page()
-            pdf.set_font("Arial", size=12)
-            pdf.cell(200, 10, txt=encabezado, ln=True)
-
-        linea = " | ".join(str(item.get(clave, "")) for clave in claves)
+    # Contenido de los datos
+    pdf.set_font("Arial", size=12)
+    for item in data:
+        linea = " | ".join(str(item.get(clave, "")) for clave in keys)
         pdf.cell(200, 10, txt=linea, ln=True)
 
-    pdf.output(reporte)
+    # Guardar el archivo PDF
+    pdf.output(name)
