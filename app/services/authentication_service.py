@@ -34,7 +34,7 @@ class AuthenticationService:
         self.usersRepositoryInterface.insertUser(user)
         return True
 
-    def generateUsername(self, firstName: str, lastName: str) -> str:
+    def generateUsername(self, firstName: str, lastName: int) -> str:
         username = f"{firstName.lower()}.{lastName.lower()}"
         username += f".{random.randint(100, 999)}"
         if self.usersRepositoryInterface.existsUsername(username):
