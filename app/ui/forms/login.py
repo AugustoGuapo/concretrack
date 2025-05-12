@@ -1,31 +1,30 @@
 import tkinter as tk
-from tkinter.font import BOLD
-import utils.generic as util
-from forms.master import MasterPanel
+import app.ui.utils.generic as util
 from tkinter import ttk
+from app.ui.utils.terminal import TerminalApp
 
-class App:
+class App(TerminalApp):
 
     def __init__(self):
-        self.ventana = tk.Tk()
-        self.ventana.title("Login")
+        super().__init__()
+        self.title("Login")
 
         # Full Screen
-        self.ventana.attributes('-fullscreen', True)
+        self.attributes('-fullscreen', True)
 
-        self.ventana.config(bg='gray')
-        self.ventana.resizable(width=0, height=0)
+        self.config(bg='gray')
+        self.resizable(width=0, height=0)
 
-        logo = util.readImage("./images/testImg.jpeg", (400, 400))
+        logo = util.readImage("app\\ui\\images\\testImg.jpeg", (400, 400))
 
         # Frame Logo
-        frame_logo = tk.Frame(self.ventana, bg='', width=300, relief=tk.SOLID, padx=10, pady=10)
+        frame_logo = tk.Frame(self, bg='#D9D9D9', width=300, relief=tk.SOLID, padx=10, pady=10)
         frame_logo.pack(side="left", expand=tk.NO, fill=tk.BOTH)
         label = tk.Label(frame_logo, image=logo)
         label.place(x=0, y=0, relwidth=1, relheight=1)
 
         # Frame Login
-        frame_form = tk.Frame(self.ventana, bg='', width=300, relief=tk.SOLID, padx=10, pady=10, background='#fcfcfc')
+        frame_form = tk.Frame(self, bg='', width=300, relief=tk.SOLID, padx=10, pady=10, background='#fcfcfc')
         frame_form.pack(side="left", expand=tk.YES, fill=tk.BOTH)
 
         # frame_form_top
@@ -62,11 +61,11 @@ class App:
         inicio.pack(fill=tk.X, padx=20, pady=20)
         inicio.bind("<Return>", (lambda event: self.verificar()))
 
-        self.ventana.mainloop()
+        self.mainloop()
 
     def iniciar_sesion(self):
         # Aquí se cierra la ventana actual y se abre la ventana de EvaluadorUI
-        self.ventana.destroy()  # Cierra la ventana de Login
+        self.destroy()  # Cierra la ventana de Login
         #evaluador_ui = EvaluadorUI()  # Llama a la vista EvaluadorUI
 
     def verificar(self):
