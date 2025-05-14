@@ -9,7 +9,7 @@ from app.models.user_role import UserRole
 
 class UserRepositoryImpl(UsersRepositoryInterface):
     def __init__(self):
-        self.db_connection = db.create_connection
+        self.db_connection = db.create_connection()
 
     def getUserByUsername(self, username) -> Optional[User]:
         cursor = self.db_connection.cursor()
@@ -27,10 +27,10 @@ class UserRepositoryImpl(UsersRepositoryInterface):
 
     def insertUser(self, user: User):
         cursor = self.db_connection.cursor()
-        cursor.execute("INSERT INTO users (username, firstName, lastName," +
-                       "passwordHash, role) VALUES (?, ?, ?, ?, ?)",
+        cursor.execute("INSERT INTO users (username, first_name, last_name," +
+                       "password, role) VALUES (?, ?, ?, ?, ?)",
                        (user.username, user.firstName, user.lastName,
-                        user.passwordHash, user.role.value))
+                        user.passwordHash, user.role))
         self.db_connection.commit()
 
     def existsUsername(self, username: str) -> bool:

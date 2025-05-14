@@ -15,7 +15,7 @@ class App(TerminalApp):
         self.config(bg='gray')
         self.resizable(width=0, height=0)
 
-        logo = util.readImage("app\\ui\\images\\testImg.jpeg", (400, 400))
+        logo = util.readImage("./app\\ui\\images\\testImg.jpeg", (400, 400))
 
         # Frame Logo
         frame_logo = tk.Frame(self, bg='#D9D9D9', width=300, relief=tk.SOLID, padx=10, pady=10)
