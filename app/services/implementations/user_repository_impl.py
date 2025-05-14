@@ -17,11 +17,11 @@ class UserRepositoryImpl(UsersRepositoryInterface):
         row = cursor.fetchone()
         if row:
             return User(
-                username=row[1],
-                firstName=row[2],
-                lastName=row[3],
-                passwordHash=row[4],
-                role=UserRole(row[5])
+                username=row[4],
+                firstName=row[1],
+                lastName=row[2],
+                passwordHash=row[5],
+                role=UserRole(row[3])
             )
         return None
 

@@ -2,12 +2,17 @@ import tkinter as tk
 import app.ui.utils.generic as util
 from tkinter import ttk
 from app.ui.utils.terminal import TerminalApp
+from app.ui.controllers.login_controller import LoginController
+from tkinter import messagebox
+
 
 class App(TerminalApp):
 
     def __init__(self):
         super().__init__()
         self.title("Login")
+        self.controller = LoginController()
+        
 
         # Full Screen
         self.attributes('-fullscreen', True)
@@ -64,11 +69,15 @@ class App(TerminalApp):
         self.mainloop()
 
     def iniciar_sesion(self):
-        # Aquí se cierra la ventana actual y se abre la ventana de EvaluadorUI
-        self.destroy()  # Cierra la ventana de Login
-        #evaluador_ui = EvaluadorUI()  # Llama a la vista EvaluadorUI
-
+        if self.controller.login(
+            username=self.usuario.get(),
+            password=self.password.get()
+        ):
+            messagebox.showinfo("Inicio de sesión", "¡Inicio de sesión exitoso!")
+            self.destroy()
+        else:
+            messagebox.showerror("Error", "Nombre de usuario o contraseña incorrectos.")
+            
     def verificar(self):
         # Puedes agregar la lógica de verificación aquí si es necesario
         print("Verificando...")
-
