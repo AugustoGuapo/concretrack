@@ -28,6 +28,8 @@ def create_database(conn):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY,
+        username TEXT UNIQUE,
+        password TEXT,
         first_name VARCHAR(255),
         last_name VARCHAR(255),
         role VARCHAR(255)
