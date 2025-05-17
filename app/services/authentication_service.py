@@ -23,7 +23,7 @@ class AuthenticationService:
 
     def authenticateUser(self, username, password) -> bool:
         fetchedUser = self.usersRepositoryInterface.getUserByUsername(username)
-        print(f"Fetched user: {fetchedUser}")
+        
         if not fetchedUser:
             logging.error(f"User {username} not found.")
             return False
