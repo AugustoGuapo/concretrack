@@ -21,15 +21,16 @@ class AuthenticationService:
         self.usersRepositoryInterface = usersRepositoryInterface
         self.passwordHasherInterface = passwordHasherInterface
 
-    def authenticateUser(self, username, password) -> bool:
+    def authenticateUser(self, username, password) -> User:
         fetchedUser = self.usersRepositoryInterface.getUserByUsername(username)
-        
+
         if not fetchedUser:
             logging.error(f"User {username} not found.")
-            return False
-
-        return self.passwordHasherInterface.verify(password,
-                                                   fetchedUser.passwordHash)
+            return None
+        if self.passwordHasherInterface.verify(password,
+                                                   fetchedUser.passwordHash):
+            return fetchedUser
+        return None
 
     def registerUser(self, firstName, lastName, password, role) -> bool:
         username = self.generateUsername(firstName, lastName)
