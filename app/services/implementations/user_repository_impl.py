@@ -9,7 +9,7 @@ from app.models.user_role import UserRole
 
 class UserRepositoryImpl(UsersRepositoryInterface):
     def __init__(self):
-        self.db_connection = db.create_connection
+        self.db_connection = db.create_connection()
 
     def getUserByUsername(self, username) -> Optional[User]:
         cursor = self.db_connection.cursor()
