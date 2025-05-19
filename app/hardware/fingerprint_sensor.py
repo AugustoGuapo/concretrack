@@ -1,6 +1,7 @@
 from pyfingerprint.pyfingerprint import PyFingerprint
+
 from app.core.exceptions.fingerprint_exceptions import SensorStorageException
-import time
+
 
 class FingerprintSensor():
 
