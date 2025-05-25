@@ -1,7 +1,7 @@
 from app.services.authentication_service import AuthenticationService
 from app.services.implementations.user_repository_impl import UserRepositoryImpl
 from app.services.implementations.bcrypt_hasher_impl import BcryptHasherImpl
-from app.state.session_state import SessionState  # <- Nuevo
+from app.state.session_state import SessionState 
 from app.hardware.fingerprint_sensor import FingerprintSensor
 
 

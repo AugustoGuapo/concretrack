@@ -105,7 +105,7 @@ class App(TerminalApp):
         frame_biometria.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
 
         # Imagen de huella dactilar como botón
-        boton_huella = tk.Button(
+        self.boton_huella = tk.Button(
             frame_biometria,
             image=self.huella_img,
             bg='#fcfcfc',
@@ -113,24 +113,33 @@ class App(TerminalApp):
             activebackground='#fcfcfc',
             command=self.iniciar_sesion_biometrico
         )
-        boton_huella.image = self.huella_img  # Mantener referencia
-        boton_huella.pack(pady=20)
+        self.boton_huella.image = self.huella_img  # Mantener referencia
+        self.boton_huella.pack(pady=20)
 
-        # Texto instructivo
-        titulo = tk.Label(
+        # Mensaje inicial
+        self.mensaje_biometrico = tk.Label(
             frame_biometria,
-            text="Ingrese su huella",
-            font=('Times', 40, 'bold'),  # Más grande y en negrita
+            text="Coloque el dedo sobre el lector",
+            font=('Times', 24),
             fg="#666a88",
             bg='#fcfcfc'
         )
-        titulo.pack(pady=10)
+        self.mensaje_biometrico.pack(pady=10)
 
         self.contenido_actual = frame_biometria
 
     def iniciar_sesion_biometrico(self):
-        if self.controller.fingerPrintLogin():
-            self.destroy()
+        """Inicia sesión usando biometría y da feedback visual"""
+        self.mensaje_biometrico.config(text="Verificando huella...", fg="orange")
+        self.update_idletasks()  # Actualiza la UI inmediatamente
+
+        resultado = self.controller.fingerPrintLogin()
+
+        if resultado:
+            self.mensaje_biometrico.config(text="¡Huella reconocida!", fg="green")
+            self.after(1500, self.destroy)  # Espera 1.5 segundos antes de cerrar
+        else:
+            self.mensaje_biometrico.config(text="Huella no reconocida. Inténtelo nuevamente.", fg="red")
 
     def mostrar_credenciales(self):
         """Muestra los campos de usuario y contraseña"""
