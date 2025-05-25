@@ -17,7 +17,7 @@ class UserRepositoryImpl(UsersRepositoryInterface):
         row = cursor.fetchone()
         if row:
             return User(
-                id = row[0]
+                id= row[0],
                 firstName=row[1],
                 lastName=row[2],
                 role=UserRole(row[3]),
@@ -39,3 +39,6 @@ class UserRepositoryImpl(UsersRepositoryInterface):
         cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
         row = cursor.fetchone()
         return row is not None
+    
+    def getUserByFingerprintId(self, fingerprintId) -> User:
+        return User("Augusto", "a", "", "", UserRole.ADMIN)
