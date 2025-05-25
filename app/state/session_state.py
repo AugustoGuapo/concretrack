@@ -1,3 +1,5 @@
+from app.models.user import User
+
 class SessionState:
     _current_user = None
 
@@ -6,7 +8,7 @@ class SessionState:
         cls._current_user = user
 
     @classmethod
-    def get_user(cls):
+    def get_user(cls)-> User:
         return cls._current_user
 
     @classmethod

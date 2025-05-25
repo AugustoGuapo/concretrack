@@ -53,11 +53,3 @@ class AuthenticationService:
             logging.error(f"Username {username} already exists.")
             return self.generateUsername(firstName, lastName)
         return username
-
-
-if __name__ == "__main__":
-    userRepository = UserRepositoryImpl()
-    passwordHasher = BcryptHasherImpl()
-    auth_service = AuthenticationService(userRepository, passwordHasher)
-    auth_service.registerUser("Guillermo", "Castaño", "password123", "admin")
-    auth_service.registerUser("Maryi", "Brieva", "password123", "operative")

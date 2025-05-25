@@ -17,20 +17,7 @@ class UserRepositoryImpl(UsersRepositoryInterface):
         row = cursor.fetchone()
         if row:
             return User(
-                firstName=row[1],
-                lastName=row[2],
-                role=UserRole(row[3]),
-                username=row[4],
-                passwordHash=row[5]
-            )
-        return None
-    
-    def getUserByFingerprintId(self, fingerprintId) -> Optional[User]:
-        cursor = self.db_connection.cursor()
-        cursor.execute("SELECT * FROM users WHERE fingerprint_id = ?", (fingerprintId,))
-        row = cursor.fetchone()
-        if row:
-            return User(
+                id = row[0]
                 firstName=row[1],
                 lastName=row[2],
                 role=UserRole(row[3]),
