@@ -26,14 +26,19 @@ def create_database(conn):
     """)
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY,
-        username TEXT UNIQUE,
-        password TEXT,
-        first_name VARCHAR(255),
-        last_name VARCHAR(255),
-        role VARCHAR(255)
+    CREATE IF NOT EXISTS TABLE "users" (
+        "id"	INTEGER,
+        "first_name"	VARCHAR(255),
+        "last_name"	VARCHAR(255),
+        "role"	VARCHAR(255),
+        "username"	TEXT,
+        "password"	TEXT, fingerprint_id INTEGER,
+        PRIMARY KEY("id")
     );
+
+    CREATE UNIQUE INDEX users_fingerprint_id_IDX ON users (fingerprint_id);
+    CREATE UNIQUE INDEX users_username_IDX ON users (username);
+    CREATE UNIQUE INDEX users_id_IDX ON users (id);
     """)
 
     cursor.execute("""
