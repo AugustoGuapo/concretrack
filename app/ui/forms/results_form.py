@@ -1,10 +1,14 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from app.ui.utils.terminal import TerminalApp
+from app.ui.controllers.results_controller import ResultsController 
+from app.state.session_state import SessionState  
 
 class ResultsForm(TerminalApp):
-    def __init__(self, family="Familia", days=30):
+    def __init__(self, member_id, family="Familia", days=30):
         super().__init__()
+        self.resultController = ResultsController()  # Aquí deberías inicializar tu controlador de resultados
+        self.member_id = member_id
         self.family = family
         self.days = days
         self.title("Registro de Resultados")
@@ -99,10 +103,12 @@ class ResultsForm(TerminalApp):
 
     def _guardar(self):
         """Acción al presionar 'Guardar'."""
-        valor = self.entry_valor.get().replace(",", ".")
+        valor = self.entry_valor.get()
+        valor = float(valor)
         if valor:
             print(f"Valor guardado: {valor}")  # Reemplaza con tu lógica
             # Feedback visual (opcional)
+            self.resultController.save_results(user_id = SessionState.get_user().id, member_id=self.member_id, results=valor)
             self.entry_valor.config(bg="#d4edda")  # Fondo verde claro
         else:
             self.entry_valor.config(bg="#f8d7da")  # Fondo rojo claro (error)
@@ -113,5 +119,9 @@ class ResultsForm(TerminalApp):
         self.destroy()  # O navegar a otra pantalla
 
 if __name__ == "__main__":
-    app = ResultsForm()
+    from app.models.user import User
+    SessionState.set_user(User(
+        id=1, username="root", passwordHash="root", firstName="Juan Pérez", lastName="Petro", role="admin"
+    ))  # Simulación de usuario
+    app = ResultsForm(2)
     app.mainloop()

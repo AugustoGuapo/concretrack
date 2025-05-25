@@ -17,7 +17,7 @@ class UserRepositoryImpl(UsersRepositoryInterface):
         row = cursor.fetchone()
         if row:
             return User(
-                
+                id = row[0]
                 firstName=row[1],
                 lastName=row[2],
                 role=UserRole(row[3]),
