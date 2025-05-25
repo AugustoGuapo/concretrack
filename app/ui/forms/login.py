@@ -95,14 +95,17 @@ class App(TerminalApp):
         frame_biometria = tk.Frame(self.frame_form_fill, bg='#fcfcfc')
         frame_biometria.pack(expand=True, fill=tk.BOTH, padx=20, pady=20)
 
-        # Imagen de huella dactilar
-        etiqueta_huella = tk.Label(
+        # Imagen de huella dactilar como botón
+        boton_huella = tk.Button(
             frame_biometria,
             image=self.huella_img,
-            bg='#fcfcfc'
+            bg='#fcfcfc',
+            bd=0,
+            activebackground='#fcfcfc',
+            command=self.iniciar_sesion_biometrico
         )
-        etiqueta_huella.image = self.huella_img  # Mantener referencia
-        etiqueta_huella.pack(pady=20)
+        boton_huella.image = self.huella_img  # Mantener referencia
+        boton_huella.pack(pady=20)
 
         # Texto instructivo
         titulo = tk.Label(
@@ -115,6 +118,10 @@ class App(TerminalApp):
         titulo.pack(pady=10)
 
         self.contenido_actual = frame_biometria
+
+    def iniciar_sesion_biometrico(self):
+        if self.controller.fingerPrintLogin():
+            self.destroy()
 
     def mostrar_credenciales(self):
         """Muestra los campos de usuario y contraseña"""
