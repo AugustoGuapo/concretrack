@@ -1,4 +1,7 @@
 import tkinter as tk
+from tkinter import ttk
+from app.ui.forms.login import App
+from app.ui.forms.operative_main import SampleListFrame
 import time
 
 class TerminalApp(tk.Tk):
@@ -7,6 +10,30 @@ class TerminalApp(tk.Tk):
         self.exit_key_count = 0
         self.last_key_time = 0
         self.setup_terminal_mode()
+
+        # Contenedor principal donde se cargarán las pantallas
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        # Diccionario para guardar las pantallas
+        self.frames = {}
+
+        # Añadimos todas las pantallas al diccionario
+        for F in (App, SampleListFrame):
+            frame = F(container)
+            self.frames[F.__name__] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        # Mostrar la primera pantalla (Login)
+        self.show_frame("SampleListFrame")
+        self.mainloop()
+
+    def show_frame(self, name):
+        """Muestra una pantalla por su nombre"""
+        frame = self.frames[name]
+        frame.tkraise()
 
     def setup_terminal_mode(self):
         """Configuración común para todas las pantallas."""

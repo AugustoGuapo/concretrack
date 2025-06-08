@@ -1,17 +1,18 @@
 import tkinter as tk
 from tkinter import font as tkfont
-from app.ui.utils.terminal import TerminalApp
+#from app.ui.utils.terminal import TerminalApp
 from app.ui.controllers.results_controller import ResultsController 
 from app.state.session_state import SessionState  
+#from app.ui.forms.operative_main import SampleListFrame  # Importar el frame de la lista de muestras
 
-class ResultsForm(TerminalApp):
+class ResultsForm(tk.Frame):
     def __init__(self, member_id, family="Familia", days=30):
         super().__init__()
         self.resultController = ResultsController()  # Aquí deberías inicializar tu controlador de resultados
         self.member_id = member_id
         self.family = family
         self.days = days
-        self.title("Registro de Resultados")
+        #self.title("Registro de Resultados")
         self.configure(bg="#eff5fb")
         
         # Fuentes personalizadas (mejor legibilidad)
@@ -117,6 +118,7 @@ class ResultsForm(TerminalApp):
         """Acción para el botón de retroceso."""
         print("Volviendo a la pantalla anterior...")
         self.destroy()  # O navegar a otra pantalla
+        SampleListFrame().mainloop()
 
 if __name__ == "__main__":
     from app.models.user import User

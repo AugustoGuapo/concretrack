@@ -1,14 +1,20 @@
 import tkinter as tk
-from tkinter import ttk
-from app.ui.utils.terminal import TerminalApp
+from app.ui.controllers.operative_controller import OperativeController
+from app.state.session_state import SessionState
+from app.ui.forms.results_form import ResultsForm
 
-class SampleListFrame(TerminalApp):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.title("Sample List Frame")
-        self.geometry("1024x600")
-        self.resizable(False, False)
+
+class SampleListFrame(tk.Frame):
+    green = "#00FF00"
+    yellow = "#FFD700"
+
+    def __init__(self, parent, *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
         self.configure(bg="#005970")  # Fondo oscuro azul-gris
+        self.operative_controller = OperativeController()
+        self.green_color = "#00FF00"
+        self.yellow_color = "#FFD700"
+        #self.views_controller = 
 
         # Crear el encabezado
         self.create_header()
@@ -17,7 +23,7 @@ class SampleListFrame(TerminalApp):
         self.create_sample_list()
 
         # Crear el botón "iniciar"
-        self.create_start_button()
+        #self.create_start_button()
 
     def create_header(self):
         """Crea el encabezado con el nombre de usuario y el botón 'Cerrar'."""
@@ -27,7 +33,7 @@ class SampleListFrame(TerminalApp):
         # Etiqueta del usuario
         user_label = tk.Label(
             header_frame,
-            text="Usuario: Maryi 0001",
+            text=SessionState.get_user().username if SessionState.get_user() else "Invitado",
             bg="#BDE5F8",
             fg="#005970",
             font=("Arial", 12, "bold"),
@@ -74,21 +80,20 @@ class SampleListFrame(TerminalApp):
         scrollbar.config(command=self.sample_list.yview)
 
         # Datos de muestra: nombre y color
-        samples = [
-            ("Muestra0102", "#00FF00"),  # Verde - inactivo
-            ("Muestra0103", "#FFD700"),  # Amarillo - activo
-            ("Muestra0104", "#FFD700"),
-            ("Muestra0105", "#FFD700"),
-        ]
+        samples = self.operative_controller.get_samples()
 
         # Guardamos los datos para poder accederlos por índice
         self.samples_data = []
 
-        for name, color in samples:
+        for member in samples:
             index = self.sample_list.size()
-            self.sample_list.insert(tk.END, f"\u25CF {name}")
+            self.sample_list.insert(tk.END, f"\u25CF {member.id}")
+            if member.result:
+                color = self.green_color
+            else:
+                color = self.yellow_color
             self.sample_list.itemconfig(index, foreground=color)
-            self.samples_data.append({"name": name, "color": color})
+            self.samples_data.append({"name": member.id, "color": color})
 
         # Asociar evento de selección
         self.sample_list.bind("<<ListboxSelect>>", self.on_sample_select)
@@ -103,12 +108,12 @@ class SampleListFrame(TerminalApp):
 
         sample_info = self.samples_data[selected_index[0]]
 
-        if sample_info["color"] == "#00FF00":
+        if sample_info["color"] == self.green_color:
             # Estado verde: no hacer nada
             print(f"{sample_info['name']} está en estado verde. No se permite acción.")
             return
 
-        elif sample_info["color"] == "#FFD700":
+        elif sample_info["color"] == self.yellow_color:
             # Estado amarillo: hacer algo
             print(f"Ejecutando acción para: {sample_info['name']}")
             self.on_yellow_sample_click(sample_info["name"])
@@ -119,7 +124,7 @@ class SampleListFrame(TerminalApp):
         Acción a realizar cuando se selecciona una muestra en estado amarillo.
         Aquí puedes poner lo que necesites: abrir ventana, cargar datos, etc.
         """
-        print(f"[ACCION] Muestra '{sample_name}' pulsada. Aquí puedes disparar otra función.")
+        self.destroy()
 
     def create_start_button(self):
         """Crea el botón 'iniciar'."""
@@ -138,7 +143,3 @@ class SampleListFrame(TerminalApp):
             width=10,
         )
         start_button.pack(side=tk.RIGHT, padx=10, pady=5)
-
-if __name__ == "__main__":
-    app = SampleListFrame()
-    app.mainloop()
