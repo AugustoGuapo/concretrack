@@ -4,7 +4,7 @@ from app.models.user_role import UserRole
 class User:
 
     def __init__(self, username: str, firstName: str,
-                 lastName: str, passwordHash: str, role: UserRole, id: int = None):
+                 lastName: str, passwordHash: str, role: UserRole, id: int = -1):
         self.username = username
         self.firstName = firstName
         self.lastName = lastName
@@ -18,3 +18,6 @@ class User:
         lastName={self.lastName},
         passwordHash={self.passwordHash},
         role={self.role})"""
+    
+    def getFullName(self) -> str:
+        return f"{self.firstName} {self.lastName}"

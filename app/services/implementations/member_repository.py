@@ -31,5 +31,23 @@ class MemberRepository:
         cursor.execute("UPDATE members SET result = ?, operative = ? WHERE id = ?",
                        ( member.result, member.operative, member.id))
         self.db_connection.commit()
+
+    def getMembersForTheDay(self) -> list[Member]:
+        """Fetches all members whose fracture date is between 01/01/1970 and today."""
+        cursor = self.db_connection.cursor()
+        cursor.execute(
+            "SELECT * FROM members WHERE date_of_fracture BETWEEN '1970-01-01' AND DATE('now') and result is null OR is_reported is null;"
+        )
+        rows = cursor.fetchall()
+        members = []
+        for row in rows:
+            members.append(Member(
+                id=row[0],
+                family_id=row[1],
+                date_of_fracture=datetime.strptime(row[2], "%Y-%m-%d"),
+                result=row[3],
+                operative=row[4]
+            ))
+        return members
     
     

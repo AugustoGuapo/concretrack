@@ -10,7 +10,7 @@ class LoginController:
         self.auth_service = AuthenticationService(
             UserRepositoryImpl(), BcryptHasherImpl()
         )
-        self.fingerprintSensor = FingerprintSensor()
+        self.fingerprintSensor = None
 
     def login(self, username: str, password: str):
         user = self.auth_service.authenticateUserCredentials(
@@ -19,6 +19,7 @@ class LoginController:
 
         if user:
             SessionState.set_user(user)  # <- Guardar el usuario en estado global
+            print(f"User {user.username} logged in successfully.")
             return True
         return False
     

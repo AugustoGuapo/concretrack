@@ -1,23 +1,23 @@
 import tkinter as tk
 import app.ui.utils.generic as util
 from tkinter import ttk
-from app.ui.utils.terminal import TerminalApp
 from app.ui.controllers.login_controller import LoginController
 from tkinter import messagebox
+from app.state.session_state import SessionState
+from app.models.user_role import UserRole
+from app.ui.forms.base_view import BaseView
 
 
-class App(TerminalApp):
+class App(BaseView):
 
-    def __init__(self):
-        super().__init__()
-        self.title("Login")
+    def __init__(self, parent, view_controller):
+        super().__init__(parent)
         self.controller = LoginController()
+        self.view_controller = view_controller
+        self.session = SessionState()
 
         # Full Screen
-        self.attributes('-fullscreen', True)
         self.config(bg='gray')
-        self.resizable(width=0, height=0)
-
         logo = util.readImage("app/ui/images/testImg.jpeg", (400, 400))
 
         # Frame Logo
@@ -74,8 +74,6 @@ class App(TerminalApp):
 
         # Cargar vista inicial
         self.cargar_vista_inicial()
-
-        self.mainloop()
 
     def cargar_vista_inicial(self):
         """Carga la vista inicial (biometría o credenciales)"""
@@ -153,8 +151,7 @@ class App(TerminalApp):
 
         self.usuario = ttk.Entry(
             frame_credenciales,
-            font=font_estilo,
-            textvariable="hola"
+            font=font_estilo
         )
         self.usuario.pack(fill=tk.X, padx=20, pady=10, ipady=8)
 
@@ -199,8 +196,16 @@ class App(TerminalApp):
             username=self.usuario.get(),
             password=self.password.get()
         ):
-            messagebox.showinfo("Inicio de sesión", "¡Inicio de sesión exitoso!")
-            self.destroy()
+            user = self.session.get_user()
+            print(f"Usuario autenticado: {user.username} con rol {user.role}")
+            if UserRole.OPERATIVE == user.role:
+                self.view_controller.show_frame("SampleListFrame")
+                return
+            if UserRole.ADMIN == user.role:
+                print("Usuario con rol ADMIN autenticado.")
+                self.view_controller.show_frame("AdminView")
+                return
+            messagebox.showinfo("Error", "El rol asignado al usuario no es válido.")
         else:
             messagebox.showerror("Error", "Nombre de usuario o contraseña incorrectos.")
 

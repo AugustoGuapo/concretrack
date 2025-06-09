@@ -9,6 +9,8 @@ class SessionState:
 
     @classmethod
     def get_user(cls)-> User:
+        if cls._current_user is None:
+            raise ValueError("No user has been set.")
         return cls._current_user
 
     @classmethod
