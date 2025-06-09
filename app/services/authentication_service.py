@@ -1,4 +1,5 @@
 from app.models.user import User
+from app.models.user_role import UserRole
 import random
 import logging
 from app.core.interfaces.users_repository_interface import UsersRepositoryInterface
@@ -46,10 +47,17 @@ class AuthenticationService:
         self.usersRepositoryInterface.insertUser(user)
         return True
 
-    def generateUsername(self, firstName: str, lastName: int) -> str:
+    def generateUsername(self, firstName: str, lastName: str) -> str:
         username = f"{firstName.lower()}.{lastName.lower()}"
         username += f".{random.randint(100, 999)}"
         if self.usersRepositoryInterface.existsUsername(username):
             logging.error(f"Username {username} already exists.")
             return self.generateUsername(firstName, lastName)
         return username
+    
+if __name__ == "__main__":
+    service = AuthenticationService(
+        UserRepositoryImpl(), BcryptHasherImpl()
+    )
+    service.registerUser("Augusto", "Diaz", "12345678", UserRole.ADMIN)
+    service.registerUser("Oscar", "Padilla", "12345678", UserRole.OPERATIVE)

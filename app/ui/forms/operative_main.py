@@ -1,39 +1,41 @@
 import tkinter as tk
 from app.ui.controllers.operative_controller import OperativeController
 from app.state.session_state import SessionState
-from app.ui.forms.results_form import ResultsForm
+from app.state.sample_state import SampleState
+from app.ui.forms.base_view import BaseView
 
 
-class SampleListFrame(tk.Frame):
+class SampleListFrame(BaseView):
     green = "#00FF00"
     yellow = "#FFD700"
 
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, view_controller, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
         self.configure(bg="#005970")  # Fondo oscuro azul-gris
         self.operative_controller = OperativeController()
         self.green_color = "#00FF00"
         self.yellow_color = "#FFD700"
-        #self.views_controller = 
+        self.view_controller = view_controller
 
         # Crear el encabezado
         self.create_header()
 
         # Crear la lista de muestras
         self.create_sample_list()
-
-        # Crear el botón "iniciar"
-        #self.create_start_button()
-
     def create_header(self):
         """Crea el encabezado con el nombre de usuario y el botón 'Cerrar'."""
-        header_frame = tk.Frame(self, bg="#BDE5F8", bd=1, relief=tk.RAISED)
-        header_frame.pack(fill=tk.X, padx=5, pady=5)
+        self.header_frame = tk.Frame(self, bg="#BDE5F8", bd=1, relief=tk.RAISED)
+        self.header_frame.pack(fill=tk.X, padx=5, pady=5)
+
+        try:
+            username = SessionState.get_user().getFullName()
+        except ValueError:
+            username = "Invitado"
 
         # Etiqueta del usuario
         user_label = tk.Label(
-            header_frame,
-            text=SessionState.get_user().username if SessionState.get_user() else "Invitado",
+            self.header_frame,
+            text=username,
             bg="#BDE5F8",
             fg="#005970",
             font=("Arial", 12, "bold"),
@@ -42,7 +44,7 @@ class SampleListFrame(tk.Frame):
 
         # Botón 'Cerrar'
         close_button = tk.Button(
-            header_frame,
+            self.header_frame,
             text="Cerrar Sesión  ➤",
             bg="#FF0000",
             fg="white",
@@ -56,16 +58,16 @@ class SampleListFrame(tk.Frame):
 
     def create_sample_list(self):
         """Crea la lista de muestras con interacción según el estado (verde/amarillo)."""
-        list_frame = tk.Frame(self, bg="#E0E0E0", bd=1, relief=tk.SUNKEN)
-        list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.list_frame = tk.Frame(self, bg="#E0E0E0", bd=1, relief=tk.SUNKEN)
+        self.list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         # Barra de desplazamiento vertical
-        scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL)
+        scrollbar = tk.Scrollbar(self.list_frame, orient=tk.VERTICAL)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Lista de muestras
         self.sample_list = tk.Listbox(
-            list_frame,
+            self.list_frame,
             bg="#E0E0E0",
             fg="#005970",
             font=("Arial", 12),
@@ -80,15 +82,15 @@ class SampleListFrame(tk.Frame):
         scrollbar.config(command=self.sample_list.yview)
 
         # Datos de muestra: nombre y color
-        samples = self.operative_controller.get_samples()
+        self.samples = self.operative_controller.get_samples()
 
         # Guardamos los datos para poder accederlos por índice
         self.samples_data = []
 
-        for member in samples:
+        for member in self.samples:
             index = self.sample_list.size()
             self.sample_list.insert(tk.END, f"\u25CF {member.id}")
-            if member.result:
+            if member.result or member.result == 0:
                 color = self.green_color
             else:
                 color = self.yellow_color
@@ -124,22 +126,15 @@ class SampleListFrame(tk.Frame):
         Acción a realizar cuando se selecciona una muestra en estado amarillo.
         Aquí puedes poner lo que necesites: abrir ventana, cargar datos, etc.
         """
-        self.destroy()
+        for sample in self.samples:
+            if sample.id == sample_name:
+                SampleState.set_sample(sample)
+                break
+        self.view_controller.show_frame("ResultsForm")
 
-    def create_start_button(self):
-        """Crea el botón 'iniciar'."""
-        button_frame = tk.Frame(self, bg="#FFFFFF", bd=1, relief=tk.FLAT)
-        button_frame.pack(fill=tk.X, padx=5, pady=5)
-
-        start_button = tk.Button(
-            button_frame,
-            text="iniciar",
-            bg="#00BFFF",
-            fg="white",
-            font=("Arial", 12, "bold"),
-            bd=0,
-            activebackground="#0099CC",
-            activeforeground="white",
-            width=10,
-        )
-        start_button.pack(side=tk.RIGHT, padx=10, pady=5)
+    def on_show(self):
+        """Método llamado al mostrar el frame."""
+        self.header_frame.destroy()
+        self.create_header()
+        self.list_frame.destroy()
+        self.create_sample_list()

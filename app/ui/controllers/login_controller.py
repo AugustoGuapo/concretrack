@@ -19,6 +19,7 @@ class LoginController:
 
         if user:
             SessionState.set_user(user)  # <- Guardar el usuario en estado global
+            print(f"User {user.username} logged in successfully.")
             return True
         return False
     

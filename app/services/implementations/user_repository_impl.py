@@ -31,7 +31,7 @@ class UserRepositoryImpl(UsersRepositoryInterface):
         cursor.execute("INSERT INTO users (username, first_name, last_name," +
                        "password, role) VALUES (?, ?, ?, ?, ?)",
                        (user.username, user.firstName, user.lastName,
-                        user.passwordHash, user.role))
+                        user.passwordHash, user.role.value))
         self.db_connection.commit()
 
     def existsUsername(self, username: str) -> bool:

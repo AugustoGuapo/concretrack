@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import ttk
 from app.ui.forms.login import App
 from app.ui.forms.operative_main import SampleListFrame
+from app.ui.forms.admin_view import AdminView
+from app.ui.forms.results_form import ResultsForm
 import time
 
 class TerminalApp(tk.Tk):
@@ -12,28 +13,34 @@ class TerminalApp(tk.Tk):
         self.setup_terminal_mode()
 
         # Contenedor principal donde se cargarán las pantallas
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
+        self.container = tk.Frame(self)
+        self.container.pack(side="top", fill="both", expand=True)
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
 
-        # Diccionario para guardar las pantallas
+        self.frame_classes = {
+            "App": App,
+            "SampleListFrame": SampleListFrame,
+            "AdminView": AdminView,
+            "ResultsForm": ResultsForm,
+        }
         self.frames = {}
 
-        # Añadimos todas las pantallas al diccionario
-        for F in (App, SampleListFrame):
-            frame = F(container)
-            self.frames[F.__name__] = frame
-            frame.grid(row=0, column=0, sticky="nsew")
-
-        # Mostrar la primera pantalla (Login)
-        self.show_frame("SampleListFrame")
+        self.show_frame("App")
         self.mainloop()
 
     def show_frame(self, name):
-        """Muestra una pantalla por su nombre"""
-        frame = self.frames[name]
-        frame.tkraise()
+        """Muestra una pantalla por su nombre, creándola si es necesario."""
+        if name not in self.frames:
+            print(f"Creando frame: {name}")
+            frame_class = self.frame_classes[name]
+            frame = frame_class(self.container, self)
+            print(f"Frame creado: {name}")
+            self.frames[name] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+        print(self.frames)
+        self.frames[name].on_show()
+        self.frames[name].tkraise()
 
     def setup_terminal_mode(self):
         """Configuración común para todas las pantallas."""

@@ -1,19 +1,22 @@
 import tkinter as tk
 from tkinter import font as tkfont
-#from app.ui.utils.terminal import TerminalApp
 from app.ui.controllers.results_controller import ResultsController 
 from app.state.session_state import SessionState  
-#from app.ui.forms.operative_main import SampleListFrame  # Importar el frame de la lista de muestras
+from app.state.sample_state import SampleState
+from app.ui.forms.base_view import BaseView
 
-class ResultsForm(tk.Frame):
-    def __init__(self, member_id, family="Familia", days=30):
-        super().__init__()
+class ResultsForm(BaseView):
+    def __init__(self, parent, view_controller):
+        super().__init__(parent)
         self.resultController = ResultsController()  # Aquí deberías inicializar tu controlador de resultados
-        self.member_id = member_id
-        self.family = family
-        self.days = days
+        sample = SampleState.get_sample()
+        self.member_id = sample.id
+        self.family = sample.family_id
+        self.days = 155  # Días de la muestra, puedes ajustar según tu lógica
         #self.title("Registro de Resultados")
         self.configure(bg="#eff5fb")
+        self.view_controller = view_controller 
+        self.username = SessionState.get_user().getFullName() if SessionState.get_user() else "Invitado"
         
         # Fuentes personalizadas (mejor legibilidad)
         self.font_header = tkfont.Font(family="Arial", size=16, weight="bold")
@@ -38,7 +41,7 @@ class ResultsForm(tk.Frame):
         
         # Usuario
         lbl_user = tk.Label(
-            header, text="Usuario: Juan Pérez", font=self.font_header, 
+            header, text=f"Usuario: {self.username}", font=self.font_header, 
             bg="#eff5fb", fg="#000000"
         )
         lbl_user.pack(side="left", padx=10)
@@ -48,19 +51,19 @@ class ResultsForm(tk.Frame):
         separator.pack(fill="x", pady=(0, 10))
 
     def _crear_body(self):
-        body = tk.Frame(self, bg="#eff5fb")
-        body.pack(expand=True, fill="both", padx=20, pady=10)
-        
+        self.body = tk.Frame(self, bg="#eff5fb")
+        self.body.pack(expand=True, fill="both", padx=20, pady=10)
+
         # Texto descriptivo
         lbl_family = tk.Label(
-            body, 
+            self.body, 
             text=f"Registrando resultados para familia: {self.family} a los {self.days} días",
             font=self.font_body, bg="#eff5fb", fg="#000000"
         )
         lbl_family.pack(pady=(10, 10))
         
         # Frame contenedor para Entry + Botón (¡ESTE FRAME DEBE CONTENERLOS!)
-        frame_entry_boton = tk.Frame(body, bg="#eff5fb")  # Fondo igual al body
+        frame_entry_boton = tk.Frame(self.body, bg="#eff5fb")  # Fondo igual al body
         frame_entry_boton.pack(fill="x", pady=(0, 0))
         self.entry_valor = tk.Entry(
             frame_entry_boton,
@@ -111,19 +114,29 @@ class ResultsForm(tk.Frame):
             # Feedback visual (opcional)
             self.resultController.save_results(user_id = SessionState.get_user().id, member_id=self.member_id, results=valor)
             self.entry_valor.config(bg="#d4edda")  # Fondo verde claro
+            self.view_controller.show_frame("SampleListFrame")
         else:
             self.entry_valor.config(bg="#f8d7da")  # Fondo rojo claro (error)
+        self._clear()
 
     def _volver(self):
         """Acción para el botón de retroceso."""
-        print("Volviendo a la pantalla anterior...")
-        self.destroy()  # O navegar a otra pantalla
-        SampleListFrame().mainloop()
+        SampleState.clear_sample()
+        self.view_controller.show_frame("SampleListFrame")
 
-if __name__ == "__main__":
-    from app.models.user import User
-    SessionState.set_user(User(
-        id=1, username="root", passwordHash="root", firstName="Juan Pérez", lastName="Petro", role="admin"
-    ))  # Simulación de usuario
-    app = ResultsForm(2)
-    app.mainloop()
+
+    def on_show(self):
+        """Acción al mostrar el formulario."""
+        self._clear()
+        self._reload()
+    def _clear(self):
+        """Limpia el formulario."""
+        self.entry_valor.delete(0, tk.END)
+        self.entry_valor.config(bg="#ffffff")
+
+    def _reload(self):
+        """Recarga el formulario si es necesario."""
+        self.family = SampleState.get_sample().family_id
+        self.member_id = SampleState.get_sample().id
+        self.body.destroy()
+        self._crear_body()

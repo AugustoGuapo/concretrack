@@ -1,19 +1,12 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-import os
-from app.ui.utils.terminal import TerminalApp
 
-class AdminView(TerminalApp):
+class AdminView(tk.Frame):
 
-    def __init__(self):
-        super().__init__()
-
-        self.title("Administración de Usuarios")
+    def __init__(self, parent, view_controller):
+        super().__init__(parent)
 
         # Full Screen
-        self.attributes('-fullscreen', True)
         self.config(bg='gray')
-        self.resizable(width=False, height=False)
 
         # ✅ NO hay frame_logo, se eliminó por completo
 
@@ -24,6 +17,8 @@ class AdminView(TerminalApp):
         # Frame para los botones
         button_frame = tk.Frame(self.frame_content, bg='#fcfcfc')
         button_frame.pack(pady=20)
+
+        self.view_controller = view_controller
 
         # Botón Agregar
         self.btn_agregar = BotonRedondeado(
@@ -99,10 +94,6 @@ class AdminView(TerminalApp):
         self.actualizar_lista()
         self.validar_estado_botones()
 
-        # Evitar cierre accidental
-        self.protocol("WM_DELETE_WINDOW", self.do_nothing)
-        self.mainloop()
-
     def toggle_seleccion(self, event):
         widget = event.widget
         index = widget.nearest(event.y)  # Índice del elemento bajo el clic
@@ -156,7 +147,6 @@ class AdminView(TerminalApp):
         dialog = tk.Toplevel(self)
         dialog.title("Editar Usuario")
         dialog.geometry("400x200")
-        dialog.transient(self)
         dialog.grab_set()
 
         # Fondo igual al del frame_content para que parezca "transparente"

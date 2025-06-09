@@ -30,8 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_name TEXT NOT NULL,
     role TEXT NOT NULL,
     username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    family_id INTEGER NOT NULL
+    password TEXT NOT NULL
 );
 
 -- Tabla: members

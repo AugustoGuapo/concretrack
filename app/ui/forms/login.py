@@ -5,9 +5,10 @@ from app.ui.controllers.login_controller import LoginController
 from tkinter import messagebox
 from app.state.session_state import SessionState
 from app.models.user_role import UserRole
+from app.ui.forms.base_view import BaseView
 
 
-class App(tk.Frame):
+class App(BaseView):
 
     def __init__(self, parent, view_controller):
         super().__init__(parent)
@@ -150,8 +151,7 @@ class App(tk.Frame):
 
         self.usuario = ttk.Entry(
             frame_credenciales,
-            font=font_estilo,
-            textvariable="hola"
+            font=font_estilo
         )
         self.usuario.pack(fill=tk.X, padx=20, pady=10, ipady=8)
 
@@ -196,9 +196,16 @@ class App(tk.Frame):
             username=self.usuario.get(),
             password=self.password.get()
         ):
-            if UserRole.OPERATIVE == self.session.get_user().role:
+            user = self.session.get_user()
+            print(f"Usuario autenticado: {user.username} con rol {user.role}")
+            if UserRole.OPERATIVE == user.role:
                 self.view_controller.show_frame("SampleListFrame")
-            else:
+                return
+            if UserRole.ADMIN == user.role:
+                print("Usuario con rol ADMIN autenticado.")
+                self.view_controller.show_frame("AdminView")
+                return
+            messagebox.showinfo("Error", "El rol asignado al usuario no es válido.")
         else:
             messagebox.showerror("Error", "Nombre de usuario o contraseña incorrectos.")
 
