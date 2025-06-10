@@ -15,8 +15,9 @@ class MemberRepository:
                 id=row[0],
                 family_id=row[1],
                 date_of_fracture=datetime.strptime(row[2], "%Y-%m-%d"),
-                result=row[3],
-                operative=row[4])
+                type_frac=row[3],
+                result=row[4],
+                operative=row[5])
         
         return None
     
