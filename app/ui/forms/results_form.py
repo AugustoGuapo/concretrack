@@ -1,47 +1,63 @@
 import tkinter as tk
 from tkinter import font as tkfont
+from tkinter import messagebox
+import os
+
+# Importaciones propias del proyecto (ajusta según tu estructura)
 from app.ui.utils.terminal import TerminalApp
-from app.ui.controllers.results_controller import ResultsController 
-from app.state.session_state import SessionState  
+from app.ui.controllers.results_controller import ResultsController
+from app.state.session_state import SessionState
+from app.models.user import User
+
+# Importar Pillow para redimensionar imágenes
+from PIL import Image, ImageTk
+
 
 class ResultsForm(TerminalApp):
     def __init__(self, member_id, family="Familia", days=30):
         super().__init__()
-        self.resultController = ResultsController()  # Aquí deberías inicializar tu controlador de resultados
+        self.resultController = ResultsController()
         self.member_id = member_id
         self.family = family
         self.days = days
         self.title("Registro de Resultados")
         self.configure(bg="#eff5fb")
-        
-        # Fuentes personalizadas (mejor legibilidad)
+
+        # Fuentes personalizadas
         self.font_header = tkfont.Font(family="Arial", size=16, weight="bold")
         self.font_body = tkfont.Font(family="Arial", size=14)
         self.font_button = tkfont.Font(family="Arial", size=12, weight="bold")
-        
+
         self._crear_header()
         self._crear_body()
-        self._crear_footer()
 
     def _crear_header(self):
         # Frame del header
         header = tk.Frame(self, bg="#eff5fb", height=80)
         header.pack(fill="x", side="top")
-        
-        # Botón de retroceso (con ícono Unicode o imagen)
+
+        # Botón de retroceso
         btn_back = tk.Button(
-            header, text="←", font=self.font_header, bg="#eff5fb", fg="#000000", 
-            borderwidth=0, command=self._volver
+            header,
+            text="←",
+            font=self.font_header,
+            bg="#eff5fb",
+            fg="#000000",
+            borderwidth=0,
+            command=self._volver
         )
         btn_back.pack(side="left", padx=10)
-        
+
         # Usuario
         lbl_user = tk.Label(
-            header, text="Usuario: Juan Pérez", font=self.font_header, 
-            bg="#eff5fb", fg="#000000"
+            header,
+            text="Usuario: Juan Pérez",
+            font=self.font_header,
+            bg="#eff5fb",
+            fg="#000000"
         )
         lbl_user.pack(side="left", padx=10)
-        
+
         # Separador
         separator = tk.Frame(self, height=2, bg="#000000")
         separator.pack(fill="x", pady=(0, 10))
@@ -49,50 +65,87 @@ class ResultsForm(TerminalApp):
     def _crear_body(self):
         body = tk.Frame(self, bg="#eff5fb")
         body.pack(expand=True, fill="both", padx=20, pady=10)
-        
-        # Texto descriptivo
+
+        # --- Sección superior: Etiqueta + Entry + Botón ---
         lbl_family = tk.Label(
-            body, 
+            body,
             text=f"Registrando resultados para familia: {self.family} a los {self.days} días",
-            font=self.font_body, bg="#eff5fb", fg="#000000"
+            font=self.font_body,
+            bg="#eff5fb",
+            fg="#000000"
         )
         lbl_family.pack(pady=(10, 10))
-        
-        # Frame contenedor para Entry + Botón (¡ESTE FRAME DEBE CONTENERLOS!)
-        frame_entry_boton = tk.Frame(body, bg="#eff5fb")  # Fondo igual al body
-        frame_entry_boton.pack(fill="x", pady=(0, 0))
+
+        frame_entry_boton = tk.Frame(body, bg="#eff5fb")
+        frame_entry_boton.pack(fill="x", pady=(0, 20))
+
         self.entry_valor = tk.Entry(
             frame_entry_boton,
-            font=self.font_body, 
-            borderwidth=2, 
+            font=self.font_body,
+            borderwidth=2,
             relief="solid",
-            validate="key", 
+            validate="key",
             validatecommand=(self.register(self._validar_input), "%P")
         )
         self.entry_valor.pack(side="left", expand=True, fill="x", padx=(0, 10), ipady=10)
-        
+
         btn_guardar = tk.Button(
             frame_entry_boton,
-            text="GUARDAR", 
-            font=self.font_button, 
+            text="GUARDAR",
+            font=self.font_button,
             bg="#d9d9d9",
             fg="#000000",
-            command=self._guardar, 
+            command=self._guardar,
             width=10,
             height=2
         )
         btn_guardar.pack(side="right")
-        
-        # Asociar teclado táctil al Entry
-        # Descomentar para probar el teclado táctil
-        #self.entry_valor.bind("<FocusIn>", lambda e: self._abrir_teclado())
 
-    def _crear_footer(self):
-        footer = tk.Frame(self, bg="#eff5fb", height=40)
-        footer.pack(fill="x", side="bottom")
+        # --- Nueva sección: Radiobuttons con imágenes ---
+        radio_frame = tk.Frame(body, bg="#eff5fb")
+        radio_frame.pack(pady=(10, 0))
+
+        self.selected_type = tk.IntVar(value=-1)  # -1 = sin selección
+        self.radio_images = []
+
+        for idx in range(6):  # Tipos del 1 al 6
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            image_path = os.path.join(current_dir, "..", "images", f"Tipo{idx+1}.png")
+
+            try:
+                pil_img = Image.open(image_path)
+                pil_img = pil_img.resize((100, 150), Image.Resampling.LANCZOS)  # Redimensionar
+                img = ImageTk.PhotoImage(pil_img)
+                self.radio_images.append(img)
+            except Exception as e:
+                print(f"No se pudo cargar la imagen: {image_path} - Error: {e}")
+                img = None
+
+            option_frame = tk.Frame(radio_frame, bg="#eff5fb")
+            option_frame.pack(side="left", padx=10)
+
+            rb = tk.Radiobutton(
+                option_frame,
+                text=f"Tipo {idx+1}",
+                image=img,
+                compound="top",
+                variable=self.selected_type,
+                value=idx,
+                bg="#eff5fb",
+                fg="#000000",
+                selectcolor="#cccccc",
+                indicatoron=False,
+                width=175,
+                height=225,
+                font=self.font_body,
+                anchor="center",
+                justify="center",
+                padx=5,
+                pady=5
+            )
+            rb.pack()
 
     def _validar_input(self, texto_nuevo):
-        """Valida que el input sea numérico (con coma opcional)."""
         if texto_nuevo == "":
             return True
         try:
@@ -102,26 +155,55 @@ class ResultsForm(TerminalApp):
             return False
 
     def _guardar(self):
-        """Acción al presionar 'Guardar'."""
         valor = self.entry_valor.get()
-        valor = float(valor)
-        if valor:
-            print(f"Valor guardado: {valor}")  # Reemplaza con tu lógica
-            # Feedback visual (opcional)
-            self.resultController.save_results(user_id = SessionState.get_user().id, member_id=self.member_id, results=valor)
-            self.entry_valor.config(bg="#d4edda")  # Fondo verde claro
+        if not valor:
+            self.entry_valor.config(bg="#f8d7da")
+            return
+
+        try:
+            valor = float(valor.replace(",", "."))
+        except ValueError:
+            self.entry_valor.config(bg="#f8d7da")
+            return
+
+        self.entry_valor.config(bg="#d4edda")
+        print(f"Valor guardado: {valor}")
+
+        selected_type = self.selected_type.get()
+        if selected_type != -1:
+            tipo_seleccionado = selected_type + 1  
+            # VALOR OBTENIDO DE TIPO DE FRACTURA
+            print(tipo_seleccionado)
         else:
-            self.entry_valor.config(bg="#f8d7da")  # Fondo rojo claro (error)
+            print("No se ha seleccionado ningún tipo.")
+
+        try:
+            self.resultController.save_results(
+                user_id=SessionState.get_user().id,
+                member_id=self.member_id,
+                results=valor,
+                type_index=tipo_seleccionado
+            )
+        except Exception as e:
+            print("Error al guardar:", e)
+            messagebox.showerror("Error", "No se pudo guardar el resultado.")
 
     def _volver(self):
-        """Acción para el botón de retroceso."""
         print("Volviendo a la pantalla anterior...")
-        self.destroy()  # O navegar a otra pantalla
+        self.destroy()
+
 
 if __name__ == "__main__":
+    # Simulación de usuario
     from app.models.user import User
     SessionState.set_user(User(
-        id=1, username="root", passwordHash="root", firstName="Juan Pérez", lastName="Petro", role="admin"
-    ))  # Simulación de usuario
+        id=1,
+        username="root",
+        passwordHash="root",
+        firstName="Juan Pérez",
+        lastName="Petro",
+        role="admin"
+    ))
+
     app = ResultsForm(2)
     app.mainloop()
