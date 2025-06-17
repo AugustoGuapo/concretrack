@@ -127,8 +127,16 @@ class App(BaseView):
         self.contenido_actual = frame_biometria
 
     def iniciar_sesion_biometrico(self):
-        if self.controller.fingerPrintLogin():
-            self.destroy()
+        self.controller.fingerPrintLogin()
+        user = self.session.get_user()
+        print(f"Usuario autenticado: {user.username} con rol {user.role}")
+        if UserRole.OPERATIVE == user.role:
+            self.view_controller.show_frame("SampleListFrame")
+            return
+        if UserRole.ADMIN == user.role:
+            print("Usuario con rol ADMIN autenticado.")
+            self.view_controller.show_frame("AdminView")
+            return
 
     def mostrar_credenciales(self):
         """Muestra los campos de usuario y contraseña"""

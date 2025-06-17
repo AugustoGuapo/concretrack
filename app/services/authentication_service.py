@@ -43,7 +43,7 @@ class AuthenticationService:
             logging.error(f"Username {username} already exists.")
             return False
         hashedPassword = self.passwordHasherInterface.hash(password)
-        user = User(username, firstName, lastName, hashedPassword, role, fingerprintId)
+        user = User(-1, username, firstName, lastName, hashedPassword, role, fingerprintId)
         self.usersRepositoryInterface.insertUser(user)
         return True
 
@@ -59,5 +59,5 @@ if __name__ == "__main__":
     service = AuthenticationService(
         UserRepositoryImpl(), BcryptHasherImpl()
     )
-    service.registerUser("Augusto", "Diaz", "12345678", UserRole.ADMIN)
-    service.registerUser("Oscar", "Padilla", "12345678", UserRole.OPERATIVE)
+    service.registerUser("Augusto", "Diaz", "12345678", UserRole.OPERATIVE, 6)
+    #service.registerUser("Oscar", "Padilla", "12345678", UserRole.OPERATIVE)

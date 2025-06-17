@@ -25,44 +25,47 @@ class SampleListFrame(BaseView):
     def create_header(self):
         """Crea el encabezado con el nombre de usuario y el botón 'Cerrar'."""
         self.header_frame = tk.Frame(self, bg="#BDE5F8", bd=1, relief=tk.RAISED)
-        self.header_frame.pack(fill=tk.X, padx=5, pady=5)
+        self.header_frame.pack(fill=tk.X, padx=10, pady=10)  # Más padding
 
         try:
             username = SessionState.get_user().getFullName()
         except ValueError:
             username = "Invitado"
 
-        # Etiqueta del usuario
+        # Etiqueta del usuario (fuente más grande)
         user_label = tk.Label(
             self.header_frame,
             text=username,
             bg="#BDE5F8",
             fg="#005970",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 40, "bold"),  # Aumentado
         )
-        user_label.pack(side=tk.LEFT, padx=10, pady=5)
+        user_label.pack(side=tk.LEFT, padx=20, pady=10)
 
-        # Botón 'Cerrar'
+        # Botón 'Cerrar' (fuente y padding mayores)
         close_button = tk.Button(
             self.header_frame,
             text="Cerrar Sesión  ➤",
             bg="#FF0000",
             fg="white",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 40, "bold"),  # Aumentado
             bd=0,
             activebackground="#CC0000",
             activeforeground="white",
             command=self.destroy,
+            height=2,  # Más alto
+            width=15   # Más ancho
         )
-        close_button.pack(side=tk.RIGHT, padx=10, pady=5)
+        close_button.pack(side=tk.RIGHT, padx=20, pady=10)
+
 
     def create_sample_list(self):
         """Crea la lista de muestras con interacción según el estado (verde/amarillo)."""
         self.list_frame = tk.Frame(self, bg="#E0E0E0", bd=1, relief=tk.SUNKEN)
-        self.list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.list_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
         # Barra de desplazamiento vertical
-        scrollbar = tk.Scrollbar(self.list_frame, orient=tk.VERTICAL)
+        scrollbar = tk.Scrollbar(self.list_frame, orient=tk.VERTICAL, width=100)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
         # Lista de muestras
@@ -70,21 +73,19 @@ class SampleListFrame(BaseView):
             self.list_frame,
             bg="#E0E0E0",
             fg="#005970",
-            font=("Arial", 12),
+            font=("Arial", 80),  # Aumentado
             selectbackground="#BDE5F8",
             selectmode=tk.SINGLE,
             yscrollcommand=scrollbar.set,
-            activestyle="none"
+            activestyle="none",
+            height=10  # Opcional: puede controlar cuántos items visibles
         )
         self.sample_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        # Configurar la barra de desplazamiento
         scrollbar.config(command=self.sample_list.yview)
 
-        # Datos de muestra: nombre y color
+        # Datos de muestra
         self.samples = self.operative_controller.get_samples()
-
-        # Guardamos los datos para poder accederlos por índice
         self.samples_data = []
 
         for member in self.samples:
@@ -97,8 +98,8 @@ class SampleListFrame(BaseView):
             self.sample_list.itemconfig(index, foreground=color)
             self.samples_data.append({"name": member.id, "color": color})
 
-        # Asociar evento de selección
         self.sample_list.bind("<<ListboxSelect>>", self.on_sample_select)
+
 
 
     def on_sample_select(self, event):

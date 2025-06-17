@@ -8,6 +8,10 @@ from app.ui.forms.base_view import BaseView
 class ResultsForm(BaseView):
     def __init__(self, parent, view_controller):
         super().__init__(parent)
+        # Al inicio de __init__
+        self.valor_var = tk.StringVar()
+
+
         self.resultController = ResultsController()  # Aquí deberías inicializar tu controlador de resultados
         sample = SampleState.get_sample()
         self.member_id = sample.id
@@ -19,9 +23,9 @@ class ResultsForm(BaseView):
         self.username = SessionState.get_user().getFullName() if SessionState.get_user() else "Invitado"
         
         # Fuentes personalizadas (mejor legibilidad)
-        self.font_header = tkfont.Font(family="Arial", size=16, weight="bold")
-        self.font_body = tkfont.Font(family="Arial", size=14)
-        self.font_button = tkfont.Font(family="Arial", size=12, weight="bold")
+        self.font_header = tkfont.Font(family="Arial", size=42, weight="bold")
+        self.font_body = tkfont.Font(family="Arial", size=40)
+        self.font_button = tkfont.Font(family="Arial", size=38, weight="bold")
         
         self._crear_header()
         self._crear_body()
@@ -65,14 +69,16 @@ class ResultsForm(BaseView):
         # Frame contenedor para Entry + Botón (¡ESTE FRAME DEBE CONTENERLOS!)
         frame_entry_boton = tk.Frame(self.body, bg="#eff5fb")  # Fondo igual al body
         frame_entry_boton.pack(fill="x", pady=(0, 0))
+        # En el Entry
         self.entry_valor = tk.Entry(
             frame_entry_boton,
-            font=self.font_body, 
-            borderwidth=2, 
+            font=self.font_body,
+            borderwidth=2,
             relief="solid",
-            validate="key", 
+            textvariable=self.valor_var,
+            validate="key",
             validatecommand=(self.register(self._validar_input), "%P")
-        )
+    )
         self.entry_valor.pack(side="left", expand=True, fill="x", padx=(0, 10), ipady=10)
         
         btn_guardar = tk.Button(
@@ -86,6 +92,8 @@ class ResultsForm(BaseView):
             height=2
         )
         btn_guardar.pack(side="right")
+        self._crear_teclado_numerico()
+
         
         # Asociar teclado táctil al Entry
         # Descomentar para probar el teclado táctil
@@ -140,3 +148,40 @@ class ResultsForm(BaseView):
         self.member_id = SampleState.get_sample().id
         self.body.destroy()
         self._crear_body()
+    def _crear_teclado_numerico(self):
+        teclado_frame = tk.Frame(self.body, bg="#eff5fb")
+        teclado_frame.pack(pady=(20, 10))
+
+        botones = [
+            ["7", "8", "9"],
+            ["4", "5", "6"],
+            ["1", "2", "3"],
+            [".", "0", "←"],
+            ["C"]
+        ]
+
+        for fila in botones:
+            fila_frame = tk.Frame(teclado_frame, bg="#eff5fb")
+            fila_frame.pack(pady=5)
+            for texto in fila:
+                btn = tk.Button(
+                    fila_frame,
+                    text=texto,
+                    font=self.font_button,
+                    width=4,
+                    height=2,
+                    bg="#d9d9d9",
+                    fg="#000000",
+                    command=lambda val=texto: self._presionar_tecla(val)
+                )
+                btn.pack(side="left", padx=5)
+    def _presionar_tecla(self, tecla):
+        actual = self.valor_var.get()
+
+        if tecla == "C":
+            self.valor_var.set("")
+        elif tecla == "←":
+            self.valor_var.set(actual[:-1])
+        else:
+            self.valor_var.set(actual + tecla)
+

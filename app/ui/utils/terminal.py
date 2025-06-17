@@ -27,6 +27,7 @@ class TerminalApp(tk.Tk):
         self.frames = {}
 
         self.show_frame("App")
+        self.after(100, lambda: self.attributes("-fullscreen", True))
         self.mainloop()
 
     def show_frame(self, name):
@@ -42,9 +43,9 @@ class TerminalApp(tk.Tk):
         self.frames[name].on_show()
         self.frames[name].tkraise()
 
+
     def setup_terminal_mode(self):
         """Configuración común para todas las pantallas."""
-        self.attributes("-fullscreen", True)
         self.bind("<Escape>", lambda e: None)
         self.bind("<Alt-F4>", lambda e: None)
         self.protocol("WM_DELETE_WINDOW", self._disable_close)

@@ -52,6 +52,7 @@ class UserRepositoryImpl(UsersRepositoryInterface):
                 lastName=row[2],
                 role=UserRole(row[3]),
                 username=row[4],
-                passwordHash=row[5]
+                passwordHash=row[5],
+                fingerprintId=row[6]
             )
         return None
