@@ -37,13 +37,13 @@ class AuthenticationService:
             return None
         return fetchedUser
 
-    def registerUser(self, firstName, lastName, password, role) -> bool:
+    def registerUser(self, firstName, lastName, password, role, fingerprintId) -> bool:
         username = self.generateUsername(firstName, lastName)
         if self.usersRepositoryInterface.getUserByUsername(username):
             logging.error(f"Username {username} already exists.")
             return False
         hashedPassword = self.passwordHasherInterface.hash(password)
-        user = User(username, firstName, lastName, hashedPassword, role)
+        user = User(username, firstName, lastName, hashedPassword, role, fingerprintId)
         self.usersRepositoryInterface.insertUser(user)
         return True
 

@@ -1,9 +1,17 @@
 import tkinter as tk
+from tkinter import ttk
+from app.ui.controllers.admin_controller import AdminController
+from app.ui.forms.base_view import BaseView
+from app.models.user_role import UserRole
+from PIL import Image, ImageTk
+from app.ui.utils.generic import readImage
+import time
 
-class AdminView(tk.Frame):
+class AdminView(BaseView):
 
     def __init__(self, parent, view_controller):
         super().__init__(parent)
+        self.admin_controller = AdminController()
 
         # Full Screen
         self.config(bg='gray')
@@ -121,10 +129,108 @@ class AdminView(tk.Frame):
         self.btn_eliminar.config(state=estado)
         self.btn_editar.config(state=estado)
 
+    def mostrar_ventana_emergente(self):
+        ventana = tk.Toplevel()
+        ventana.title("Formulario de Usuario")
+        ventana.geometry("800x600")
+        ventana.configure(bg="white")
+
+        fuente_grande = ("Arial", 20)
+        alto_entry = 3
+        ancho_entry = 30
+        pady_campo = 20
+
+        # Nombre
+        tk.Label(ventana, text="Nombre", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
+        entry_nombre = tk.Entry(ventana, font=fuente_grande, width=ancho_entry)
+        entry_nombre.pack()
+
+        # Apellido
+        tk.Label(ventana, text="Apellido", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
+        entry_apellido = tk.Entry(ventana, font=fuente_grande, width=ancho_entry)
+        entry_apellido.pack()
+
+        # Contraseña
+        tk.Label(ventana, text="Contraseña", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
+        entry_contrasena = tk.Entry(ventana, show="*", font=fuente_grande, width=ancho_entry)
+        entry_contrasena.pack()
+
+        # Rol (simulación de combobox con OptionMenu)
+        tk.Label(ventana, text="Rol", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
+        rol_var = tk.StringVar(ventana)
+        rol_var.set("Seleccionar rol")
+        opciones_rol = ["Administrador", "Operario"]
+        opciones_rol_enum = {opciones_rol[0]: UserRole.ADMIN, opciones_rol[1]: UserRole.OPERATIVE}  # Obtener nombres de los roles
+        menu_rol = tk.OptionMenu(ventana, rol_var, *opciones_rol)
+        menu_rol.config(font=fuente_grande, width=ancho_entry)
+        menu_rol.pack()
+
+        # Botón Enviar
+        def enviar():
+            print("Nombre:", entry_nombre.get())
+            print("Apellido:", entry_apellido.get())
+            print("Contraseña:", entry_contrasena.get())
+            print("Rol:", opciones_rol_enum.get(rol_var.get()))
+        def registrar_huella():
+            enviar()
+            self.mostrar_ventana_biometrica(entry_nombre.get(), entry_apellido.get(), entry_contrasena.get(), opciones_rol_enum.get(rol_var.get()), ventana)
+
+
+        tk.Button(ventana, text="Registrar huella", font=fuente_grande, height=2, width=20, command=registrar_huella).pack(pady=40)
+    def mostrar_ventana_biometrica(self, nombre, apellido, contrasena, rol, ventana2):
+        ventana = tk.Toplevel()
+        ventana.title("Registro Biométrico")
+        ventana.geometry("800x600")
+        ventana.configure(bg="white")
+
+        fuente_instruccion = ("Arial", 24, "bold")
+        try:
+            img_tk = readImage("app/ui/images/fingerPrint.png", size=(300, 300))
+            label_imagen = tk.Label(ventana, image=img_tk, bg="white")
+            label_imagen.image = img_tk  # importante: mantener referencia
+            label_imagen.pack(pady=40)
+        except Exception as e:
+            tk.Label(ventana, text="[Imagen no encontrada]", font=fuente_instruccion, bg="white", fg="red").pack(pady=40)
+
+        # Texto instruccional
+        texto_instruccion = tk.StringVar()
+        texto_instruccion.set("Por favor, coloque su dedo en el lector biométrico")
+
+        label_dinamico = ttk.Label(ventana, textvariable=texto_instruccion, font=fuente_instruccion, background="white")
+        label_dinamico.pack(pady=20)
+        while(True):
+            try:
+                self.admin_controller.capture_fingerprint()
+            except Exception as e:
+                texto_instruccion.set("Huella registrada con usuario distinto, use otra")
+                return
+            try:
+                texto_instruccion.set("Leyendo huella...")
+                time.sleep(2)  # Simula el tiempo de lectura de la huella
+                texto_instruccion.set("Huella capturada, procesando...")
+                time.sleep(2)
+                texto_instruccion.set("Coloque su dedo nuevamente para registrar")
+                fingerprintId = self.admin_controller.store_fingerprint()
+            except Exception as e:
+                texto_instruccion.set("Error al registrar huella, intente nuevamente")
+                time.sleep(2)
+                continue  # Reintentar captura de huella
+            break
+        self.admin_controller.create_user(
+            firstName=nombre,
+            lastName=apellido,
+            password=contrasena,
+            role=rol,
+            fingerprintId=fingerprintId
+        )
+        texto_instruccion.set("Usuario registrado exitosamente")
+
+        ventana.destroy()
+        ventana2.destroy()  
+
     def agregar_usuario(self):
-        self.usuarios.append({"nombre": "Nuevo Usuario", "rol": "Sin rol"})
-        self.actualizar_lista()
-        self.validar_estado_botones()
+        self.mostrar_ventana_emergente()
+        self.admin_controller.create_user()
 
     def eliminar_usuario(self):
         selected_index = self.listbox.curselection()
