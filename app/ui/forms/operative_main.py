@@ -38,7 +38,7 @@ class SampleListFrame(BaseView):
             text=username,
             bg="#BDE5F8",
             fg="#005970",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 20, "bold"),
         )
         user_label.pack(side=tk.LEFT, padx=10, pady=5)
 
@@ -48,7 +48,7 @@ class SampleListFrame(BaseView):
             text="Cerrar Sesión  ➤",
             bg="#FF0000",
             fg="white",
-            font=("Arial", 12, "bold"),
+            font=("Arial", 20, "bold"),
             bd=0,
             activebackground="#CC0000",
             activeforeground="white",
@@ -70,7 +70,7 @@ class SampleListFrame(BaseView):
             self.list_frame,
             bg="#E0E0E0",
             fg="#005970",
-            font=("Arial", 12),
+            font=("Arial", 36),
             selectbackground="#BDE5F8",
             selectmode=tk.SINGLE,
             yscrollcommand=scrollbar.set,

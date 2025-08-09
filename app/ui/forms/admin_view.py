@@ -116,13 +116,13 @@ class AdminView(BaseView):
 
         user_label = tk.Label(
             self.header_frame, text=username, bg="#BDE5F8",
-            fg="#005970", font=("Arial", 12, "bold")
+            fg="#005970", font=("Arial", 20, "bold")
         )
         user_label.pack(side=tk.LEFT, padx=10, pady=5)
 
         close_button = tk.Button(
             self.header_frame, text="Cerrar Sesión  ➤", bg="#FF0000",
-            fg="white", font=("Arial", 12, "bold"), bd=0,
+            fg="white", font=("Arial", 20, "bold"), bd=0,
             activebackground="#CC0000", activeforeground="white",
             command=self.logout
         )
