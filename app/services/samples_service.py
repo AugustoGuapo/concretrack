@@ -9,6 +9,6 @@ class SamplesService:
         """Fetches the list of samples from the repository for today's work."""
         return self.members_repository.getMembersForTheDay()
     
-    def sign_work(self, user_id: int) -> bool:
+    def sign_work(self) -> bool:
         """Signs the work for the specified user."""
-        return self.members_repository.signWork(user_id)
+        return self.members_repository.signWork()
