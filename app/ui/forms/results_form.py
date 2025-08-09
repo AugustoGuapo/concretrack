@@ -114,7 +114,7 @@ class ResultsForm(BaseView):
             # Feedback visual (opcional)
             self.resultController.save_results(user_id = SessionState.get_user().id, member_id=self.member_id, results=valor)
             self.entry_valor.config(bg="#d4edda")  # Fondo verde claro
-            self.view_controller.show_frame("SampleListFrame")
+            self._volver()
         else:
             self.entry_valor.config(bg="#f8d7da")  # Fondo rojo claro (error)
         self._clear()

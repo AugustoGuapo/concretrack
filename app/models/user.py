@@ -5,6 +5,7 @@ class User:
 
     def __init__(self, id: int, username: str, firstName: str,
                  lastName: str, passwordHash: str, role: UserRole, fingerprintId: int):
+        self.id = id
         self.username = username
         self.firstName = firstName
         self.lastName = lastName

@@ -143,6 +143,7 @@ class SampleListFrame(BaseView):
         while(counter < 5):
             isSigned = self.operative_controller.sign_work()
             if isSigned == False:
+                counter += 1
                 pass
             else:
                 break
