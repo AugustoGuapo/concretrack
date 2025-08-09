@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Tabla: members
-CREATE TABLE members (
+CREATE TABLE IF NOT EXISTS members (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     family_id INTEGER NOT NULL,
     date_of_fracture DATE,     -- fecha programada para fracturar
