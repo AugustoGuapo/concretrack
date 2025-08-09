@@ -28,7 +28,7 @@ class MemberRepository:
 
     def insertResult(self, member: Member):
         cursor = self.db_connection.cursor()
-        cursor.execute("UPDATE members SET result = ?, operative = ?, fractured_at = DATE('now') WHERE id = ?",
+        cursor.execute("UPDATE members SET result = ?, operative = ?, fractured_at = DATE('now', 'localtime') WHERE id = ?",
                        (member.result, member.operative, member.id))
         self.db_connection.commit()
 
@@ -36,7 +36,7 @@ class MemberRepository:
         """Fetches all members whose fracture date is between 01/01/1970 and today."""
         cursor = self.db_connection.cursor()
         cursor.execute(
-            "SELECT * FROM members WHERE date_of_fracture BETWEEN '1970-01-01' AND DATE('now') and result is null OR is_reported is null;"
+            "SELECT * FROM members WHERE date_of_fracture BETWEEN '1970-01-01' AND DATE('now', 'localtime') and result is null OR is_reported is null;"
         )
         rows = cursor.fetchall()
         members = []
