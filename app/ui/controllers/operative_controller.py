@@ -25,7 +25,7 @@ class OperativeController:
         if working_user == -1:
             return False
         if working_user == user.fingerprintId:
-            self.samples_service.sign_work(user.id)
+            self.samples_service.sign_work(user.fingerprintId)
             logging.info(f"User {user.username} signed work successfully.")
             return True
         return False
