@@ -28,8 +28,8 @@ class MemberRepository:
 
     def insertResult(self, member: Member):
         cursor = self.db_connection.cursor()
-        cursor.execute("UPDATE members SET result = ?, operative = ? WHERE id = ?",
-                       ( member.result, member.operative, member.id))
+        cursor.execute("UPDATE members SET result = ?, operative = ?, fractured_at = DATE('now') WHERE id = ?",
+                       (member.result, member.operative, member.id))
         self.db_connection.commit()
 
     def getMembersForTheDay(self) -> list[Member]:
