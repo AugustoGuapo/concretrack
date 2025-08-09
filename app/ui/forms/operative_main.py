@@ -139,6 +139,11 @@ class SampleListFrame(BaseView):
         self.list_frame.destroy()
         self.create_sample_list()
     def logout(self):
+        counter = 0
+        while(counter < 5):
+            isSigned = self.operative_controller.sign_work()
+            if isSigned == False:
+                pass
         """Cierra sesión y redirige al Login."""
         SessionState.clear_user()
         if hasattr(self.view_controller, "show_frame"):

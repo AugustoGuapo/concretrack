@@ -50,4 +50,12 @@ class MemberRepository:
             ))
         return members
     
+    def signWork(self):
+        cursor = self.db_connection.cursor()
+        cursor.execute(
+            "UPDATE members SET is_reported = 1 WHERE result IS NOT NULL AND is_reported IS NULL;"
+        )
+        self.db_connection.commit()
+
+    
     
