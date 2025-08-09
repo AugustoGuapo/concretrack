@@ -52,7 +52,7 @@ class SampleListFrame(BaseView):
             bd=0,
             activebackground="#CC0000",
             activeforeground="white",
-            command=self.destroy,
+            command=self.logout,
         )
         close_button.pack(side=tk.RIGHT, padx=10, pady=5)
 
@@ -138,3 +138,14 @@ class SampleListFrame(BaseView):
         self.create_header()
         self.list_frame.destroy()
         self.create_sample_list()
+    def logout(self):
+        """Cierra sesión y redirige al Login."""
+        SessionState.clear_user()
+        if hasattr(self.view_controller, "show_frame"):
+            from app.ui.forms.login import App as Login
+            if "Login" not in self.view_controller.frame_classes:
+                self.view_controller.frame_classes["Login"] = Login
+            self.view_controller.show_frame("Login")
+            login_frame = self.view_controller.frames.get("Login")
+            if login_frame and hasattr(login_frame, "clear_fields"):
+                login_frame.clear_fields()
