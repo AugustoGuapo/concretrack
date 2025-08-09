@@ -144,6 +144,8 @@ class SampleListFrame(BaseView):
             isSigned = self.operative_controller.sign_work()
             if isSigned == False:
                 pass
+            else:
+                break
         """Cierra sesión y redirige al Login."""
         SessionState.clear_user()
         if hasattr(self.view_controller, "show_frame"):
