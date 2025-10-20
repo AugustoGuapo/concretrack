@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS users (
     last_name TEXT,
     role TEXT,
     username TEXT UNIQUE,
-    password TEXT
+    password TEXT,
+    is_active INTEGER DEFAULT 1  -- 1 = activo, 0 = eliminado lógicamente
 );
 
 -- Tabla: families
@@ -40,5 +41,5 @@ CREATE TABLE IF NOT EXISTS samples (
     date_of_fracture TEXT,  -- Fecha como texto (YYYY-MM-DD)
     result INTEGER,
     operative INTEGER,   -- Puede ser NULL
-    is_reported INTEGER    -- Usamos 0 o 1 en lugar de BOOLEAN
+    is_reported INTEGER  -- 1 = reportado, 0 = no reportado
 );

@@ -56,3 +56,37 @@ class UserRepositoryImpl(UsersRepositoryInterface):
                 fingerprintId=int(row[6])
             )
         return None
+    
+    def getAllActiveUsers(self):
+        cursor = self.db_connection.cursor()
+        cursor.execute("SELECT id, first_name, last_name, role FROM users WHERE is_active = 1")
+        rows = cursor.fetchall()
+        usuarios = []
+        for row in rows:
+            usuarios.append({
+                "id": row[0],
+                "nombre": f"{row[1]} {row[2]}",
+                "rol": row[3]
+            })
+        return usuarios
+
+    def updateUser(self, user_id, first_name, last_name, role, password_hash=None):
+        cursor = self.db_connection.cursor()
+
+        if password_hash:
+            query = "UPDATE users SET first_name=?, last_name=?, role=?, password=? WHERE id=?"
+            params = (first_name, last_name, role, password_hash, user_id)
+        else:
+            query = "UPDATE users SET first_name=?, last_name=?, role=? WHERE id=?"
+            params = (first_name, last_name, role, user_id)
+
+        cursor.execute(query, params)
+        self.db_connection.commit()
+    
+
+
+    def logicalDeleteUser(self, user_id):
+        cursor = self.db_connection.cursor()
+        cursor.execute("UPDATE users SET is_active = 0 WHERE id = ?", (user_id,))
+        self.db_connection.commit()
+

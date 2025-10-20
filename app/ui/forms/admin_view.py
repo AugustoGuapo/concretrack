@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import dialog
 from app.ui.controllers.admin_controller import AdminController
 from app.ui.forms.base_view import BaseView
 from app.models.user_role import UserRole
@@ -7,7 +8,8 @@ from PIL import Image, ImageTk
 from app.ui.utils.generic import readImage
 from app.state.session_state import SessionState  # Import necesario para logout
 import time
-
+import tkinter.messagebox
+from tkinter import messagebox
 
 class AdminView(BaseView):
     def __init__(self, parent, view_controller):
@@ -94,10 +96,8 @@ class AdminView(BaseView):
         self.listbox.config(yscrollcommand=scrollbar_y.set)
 
         # Datos iniciales (puedes cambiar por cargar desde JSON)
-        self.usuarios = [
-            {"nombre": "Lamar yi", "rol": "PM"},
-            {"nombre": "El inge", "rol": "Inge"},
-        ]
+        self.usuarios = self.admin_controller.get_all_users()
+
         self.actualizar_lista()
         self.validar_estado_botones()
 
@@ -169,40 +169,91 @@ class AdminView(BaseView):
         self.btn_editar.config(state=estado)
 
     def mostrar_ventana_emergente(self):
-        """Muestra ventana emergente para registrar un nuevo usuario."""
+        """Muestra ventana para registrar un nuevo usuario (sin huella por ahora)."""
         ventana = tk.Toplevel()
-        ventana.title("Formulario de Usuario")
+        ventana.title("Registrar nuevo usuario")
         ventana.geometry("800x600")
         ventana.configure(bg="white")
 
-        fuente_grande = ("Arial", 20)
+        fuente = ("Arial", 20)
         ancho_entry = 30
         pady_campo = 20
 
         # Nombre
-        tk.Label(ventana, text="Nombre", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
-        entry_nombre = tk.Entry(ventana, font=fuente_grande, width=ancho_entry)
+        tk.Label(ventana, text="Nombre", font=fuente, bg="white").pack(pady=(pady_campo, 5))
+        entry_nombre = tk.Entry(ventana, font=fuente, width=ancho_entry)
         entry_nombre.pack()
 
         # Apellido
-        tk.Label(ventana, text="Apellido", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
-        entry_apellido = tk.Entry(ventana, font=fuente_grande, width=ancho_entry)
+        tk.Label(ventana, text="Apellido", font=fuente, bg="white").pack(pady=(pady_campo, 5))
+        entry_apellido = tk.Entry(ventana, font=fuente, width=ancho_entry)
         entry_apellido.pack()
 
         # Contraseña
-        tk.Label(ventana, text="Contraseña", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
-        entry_contrasena = tk.Entry(ventana, show="*", font=fuente_grande, width=ancho_entry)
+        tk.Label(ventana, text="Contraseña", font=fuente, bg="white").pack(pady=(pady_campo, 5))
+        entry_contrasena = tk.Entry(ventana, show="*", font=fuente, width=ancho_entry)
         entry_contrasena.pack()
 
-        # Rol (simulación de combobox con OptionMenu)
-        tk.Label(ventana, text="Rol", font=fuente_grande, bg="white").pack(pady=(pady_campo, 5))
+        # Rol
+        tk.Label(ventana, text="Rol", font=fuente, bg="white").pack(pady=(pady_campo, 5))
         rol_var = tk.StringVar(ventana)
         rol_var.set("Seleccionar rol")
+
         opciones_rol = ["Administrador", "Operario"]
-        opciones_rol_enum = {opciones_rol[0]: UserRole.ADMIN, opciones_rol[1]: UserRole.OPERATIVE}
+        opciones_rol_enum = {
+            "Administrador": UserRole.ADMIN,
+            "Operario": UserRole.OPERATIVE
+        }
+
         menu_rol = tk.OptionMenu(ventana, rol_var, *opciones_rol)
-        menu_rol.config(font=fuente_grande, width=ancho_entry)
+        menu_rol.config(font=fuente, width=ancho_entry)
         menu_rol.pack()
+
+        def guardar_usuario():
+            nombre = entry_nombre.get().strip()
+            apellido = entry_apellido.get().strip()
+            contrasena = entry_contrasena.get().strip()
+            rol_texto = rol_var.get().strip()
+
+            # Validar rol
+            rol = opciones_rol_enum.get(rol_texto, None)
+
+            if not nombre or not apellido or not contrasena or rol is None:
+                messagebox.showerror("Error", "Completa todos los campos correctamente.")
+                return
+
+            try:
+                # Crear usuario sin huella
+                self.admin_controller.create_user(
+                    firstName=nombre,
+                    lastName=apellido,
+                    password=contrasena,
+                    role=rol
+                )
+
+                messagebox.showinfo("Éxito", "Usuario registrado correctamente")
+
+                # Actualizar lista y cerrar ventana
+                self.usuarios = self.admin_controller.get_all_users()
+                self.actualizar_lista()
+                ventana.destroy()
+
+            except Exception as e:
+                messagebox.showerror("Error", f"No se pudo registrar el usuario:\n{e}")
+
+        # Botón guardar
+        tk.Button(
+            ventana,
+            text="Guardar Usuario",
+            font=("Arial", 22, "bold"),
+            bg="#4CAF50",
+            fg="white",
+            height=2,
+            width=20,
+            relief="flat",
+            command=guardar_usuario
+        ).pack(pady=40)
+
 
         # Botón Enviar
         def enviar():
@@ -215,9 +266,34 @@ class AdminView(BaseView):
             enviar()
             self.mostrar_ventana_biometrica(entry_nombre.get(), entry_apellido.get(), entry_contrasena.get(),
                                             opciones_rol_enum.get(rol_var.get()), ventana)
+            def registrar_usuario():
+                nombre = entry_nombre.get().strip()
+                apellido = entry_apellido.get().strip()
+                contrasena = entry_contrasena.get().strip()
+                rol = opciones_rol_enum.get(rol_var.get())
 
-        tk.Button(ventana, text="Registrar huella", font=fuente_grande, height=2, width=20, command=registrar_huella).pack(
-            pady=40)
+                if not nombre or not apellido or not contrasena or rol is None:
+                    tk.messagebox.showerror("Error", "Completa todos los campos")
+                    return
+
+                self.admin_controller.create_user(nombre, apellido, contrasena, rol)
+                tk.messagebox.showinfo("Éxito", "Usuario agregado correctamente")
+
+                # Actualizar lista y cerrar ventana
+                self.usuarios = self.admin_controller.get_all_users()
+                self.actualizar_lista()
+                ventana.destroy()
+
+            tk.Button(
+                ventana,
+                text="Registrar usuario",
+                font=fuente_grande,
+                height=2,
+                width=20,
+                command=registrar_usuario
+            ).pack(pady=40)
+
+        
 
     def mostrar_ventana_biometrica(self, nombre, apellido, contrasena, rol, ventana2):
         """Ventana para registro biométrico (huella dactilar)."""
@@ -275,15 +351,17 @@ class AdminView(BaseView):
 
     def agregar_usuario(self):
         self.mostrar_ventana_emergente()
-        self.admin_controller.create_user()
-
+    
     def eliminar_usuario(self):
         selected_index = self.listbox.curselection()
         if selected_index:
             index = selected_index[0]
-            del self.usuarios[index]
+            user_id = self.usuarios[index]["id"]
+            self.admin_controller.delete_user_logically(user_id)
+            self.usuarios = self.admin_controller.get_all_users()
             self.actualizar_lista()
             self.validar_estado_botones()
+
 
     def editar_usuario(self):
         selected_index = self.listbox.curselection()
@@ -293,13 +371,14 @@ class AdminView(BaseView):
             rol_actual = self.usuarios[index]["rol"]
             self.show_edit_dialog(index, nombre_actual, rol_actual)
 
+
     def show_edit_dialog(self, index, nombre_actual, rol_actual):
         dialog = tk.Toplevel(self)
         dialog.title("Editar Usuario")
-        dialog.geometry("400x200")
+        dialog.geometry("400x300")
         dialog.grab_set()
 
-        tk.Label(dialog, text="Nombre:", font=("Arial", 14)).pack(pady=5)
+        tk.Label(dialog, text="Nombre completo:", font=("Arial", 14)).pack(pady=5)
         entry_nombre = tk.Entry(dialog, font=("Arial", 14))
         entry_nombre.insert(0, nombre_actual)
         entry_nombre.pack()
@@ -309,30 +388,53 @@ class AdminView(BaseView):
         entry_rol.insert(0, rol_actual)
         entry_rol.pack()
 
+        # ✅ NUEVO CAMPO: Contraseña (opcional)
+        tk.Label(dialog, text="Nueva contraseña (opcional):", font=("Arial", 14)).pack(pady=5)
+        entry_password = tk.Entry(dialog, font=("Arial", 14), show="*")
+        entry_password.pack()
+
         def guardar():
             new_nombre = entry_nombre.get().strip()
             new_rol = entry_rol.get().strip()
-            if new_nombre and new_rol:
-                self.usuarios[index]["nombre"] = new_nombre
-                self.usuarios[index]["rol"] = new_rol
+            new_password = entry_password.get().strip()
+
+            if not new_nombre or not new_rol:
+                tk.messagebox.showerror("Error", "Completa todos los campos obligatorios.")
+                return
+
+            user_id = self.usuarios[index]["id"]
+
+            # Separar nombre y apellido
+            partes = new_nombre.split(" ", 1)
+            first_name = partes[0]
+            last_name = partes[1] if len(partes) > 1 else ""
+
+            try:
+                # Llamar al controlador con o sin contraseña
+                if new_password:
+                    self.admin_controller.update_user(user_id, first_name, last_name, new_rol, new_password)
+                else:
+                    self.admin_controller.update_user(user_id, first_name, last_name, new_rol)
+
+                tk.messagebox.showinfo("Éxito", "Usuario actualizado correctamente.")
+                self.usuarios = self.admin_controller.get_all_users()
                 self.actualizar_lista()
-                self.validar_estado_botones()
                 dialog.destroy()
+
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"No se pudo actualizar el usuario:\n{e}")
 
         tk.Button(
             dialog,
-            text="Guardar",
+            text="Guardar cambios",
             command=guardar,
             font=("Arial", 14),
             bg="#388E3C",
+            fg="white",
             relief="flat",
             padx=10,
             pady=5
-        ).pack(pady=10)
-
-    def do_nothing(self):
-        pass
-
+        ).pack(pady=15)
 
 class BotonRedondeado(tk.Canvas):
     def __init__(self, parent, width=200, height=60, radio=25,

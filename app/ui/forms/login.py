@@ -199,20 +199,32 @@ class App(BaseView):
         self.contenido_actual = frame_credenciales
 
     def iniciar_sesion(self):
-        if self.controller.login(
-            username=self.usuario.get(),
-            password=self.password.get()
-        ):
+        username = self.usuario.get().strip()
+        password = self.password.get().strip()
+
+        if not username or not password:
+            messagebox.showerror("Error", "Debes ingresar usuario y contraseña.")
+            return
+
+        if self.controller.login(username=username, password=password):
+            # ✅ Guardar el usuario autenticado en SessionState
             user = self.session.get_user()
+
+            # Si el LoginController no lo guarda automáticamente, forzamos el guardado:
+            from app.state.session_state import SessionState
+            SessionState.set_user(user)
+
             print(f"Usuario autenticado: {user.username} con rol {user.role}")
+
             if UserRole.OPERATIVE == user.role:
                 self.view_controller.show_frame("SampleListFrame")
                 return
-            if UserRole.ADMIN == user.role:
+            elif UserRole.ADMIN == user.role:
                 print("Usuario con rol ADMIN autenticado.")
                 self.view_controller.show_frame("AdminView")
                 return
-            messagebox.showinfo("Error", "El rol asignado al usuario no es válido.")
+            else:
+                messagebox.showinfo("Error", "El rol asignado al usuario no es válido.")
         else:
             messagebox.showerror("Error", "Nombre de usuario o contraseña incorrectos.")
 
