@@ -16,6 +16,10 @@ class AdminView(BaseView):
         super().__init__(parent)
         self.admin_controller = AdminController()
         self.view_controller = view_controller
+        self.role_dict = {
+            "admin": "Administrador",
+            "operative": "Operario"
+        }
 
         # Configuración principal
         self.config(bg='gray')
@@ -81,16 +85,19 @@ class AdminView(BaseView):
         list_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
 
         # Listbox con Scrollbar
+        # Usar fuente monoespaciada DejaVu Sans Mono, tamaño 4 puntos mayor (26)
+        # El ancho del listbox se ajustará dinámicamente en actualizar_lista() para centrar la lista.
         self.listbox = tk.Listbox(
             list_frame,
-            font=("Arial", 50),
+            font=("DejaVu Sans Mono", 26),
             selectbackground="#4CAF50",
             selectforeground="white",
             activestyle="none",
             bd=0,
             highlightthickness=0
         )
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Empaquetamos centrado (no expandimos horizontalmente); ancho se ajusta en actualizar_lista
+        self.listbox.pack(anchor="center", pady=10)
         scrollbar_y = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.listbox.yview)
         scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
         self.listbox.config(yscrollcommand=scrollbar_y.set)
@@ -158,9 +165,41 @@ class AdminView(BaseView):
 
     def actualizar_lista(self):
         """Actualiza la lista de usuarios mostrada."""
+        # Limpiar y construir tabla alineada por columnas (monoespaciada).
+        # No mostramos cabecera ni separador según lo solicitado.
         self.listbox.delete(0, tk.END)
-        for usuario in self.usuarios:
-            self.listbox.insert(tk.END, f"      {usuario['nombre']} - {usuario['rol']}      ")
+
+        nombres = [u.get('nombre', '') for u in self.usuarios]
+        roles = [self.role_dict.get(u.get('rol', ''), "Desconocido") for u in self.usuarios]
+        usuariosnames = [u.get('username', '') for u in self.usuarios]
+
+        # Anchura por columna basada en el valor más largo (mínimo el título)
+        w1 = max([len(s) for s in nombres] + [len("Nombre")])
+        w2 = max([len(s) for s in roles] + [len("Rol")])
+        w3 = max([len(s) for s in usuariosnames] + [len("Usuario")])
+
+        # Construir filas usando ancho fijo por columna (tipo CLI)
+        lines = []
+        for usuario, rol_texto in zip(self.usuarios, roles):
+            nombre = usuario.get('nombre', '')
+            username = usuario.get('username', '')
+            line = f"{nombre:<{w1}}  {rol_texto:<{w2}}  {username:<{w3}}"
+            lines.append(line)
+
+        # Ajustar el ancho del listbox en caracteres para que las líneas encajen y la widget pueda centrarse
+        total_chars = w1 + w2 + w3 + 4
+        try:
+            self.listbox.config(width=total_chars)
+        except Exception:
+            pass
+
+        # Insertar las filas
+        for line in lines:
+            self.listbox.insert(tk.END, line)
+
+        # Centrar el listbox en su frame: aseguramos que esté empacado centrado.
+        # (Ya se hace en __init__; aquí reforzamos tamaño para que la visual quede centrada)
+        self.listbox.update_idletasks()
 
     def validar_estado_botones(self):
         """Habilita o deshabilita botones según si hay usuarios disponibles."""
@@ -353,7 +392,7 @@ class AdminView(BaseView):
     def eliminar_usuario(self):
         selected_index = self.listbox.curselection()
         if selected_index:
-            index = selected_index[0]
+            index = selected_index[0]  # sin cabecera ni separador, índice corresponde directamente a usuarios
             user_id = self.usuarios[index]["id"]
             print(self.usuarios[index])
             answer = messagebox.askyesno("PRECAUCIÓN", f"Va a eliminar al usuario {self.usuarios[index]['nombre']} ¿está seguro?")
@@ -545,14 +584,14 @@ class AdminView(BaseView):
 
         self.listbox = tk.Listbox(
             list_frame,
-            font=("Arial", 50),
+            font=("DejaVu Sans Mono", 26),
             selectbackground="#4CAF50",
             selectforeground="white",
             activestyle="none",
             bd=0,
             highlightthickness=0
         )
-        self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        self.listbox.pack(anchor="center", pady=10)
         scrollbar_y = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.listbox.yview)
         scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
         self.listbox.config(yscrollcommand=scrollbar_y.set)
