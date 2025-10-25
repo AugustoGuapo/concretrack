@@ -10,6 +10,7 @@ class AdminController:
     def __init__(self):
         self.auth_service = AuthenticationService(UserRepositoryImpl(), BcryptHasherImpl())
         self.user_repo = UserRepositoryImpl()  # acceso directo al repositorio
+        self.fingerprint_service = FingerprintImpl()
 
     # Crear usuario (con o sin huella)
     def create_user(self, firstName, lastName, password, role, fingerprintId=None):
@@ -69,3 +70,8 @@ class AdminController:
     # Eliminar usuario lógicamente (is_active = 0)
     def delete_user_logically(self, user_id):
         self.user_repo.logicalDeleteUser(user_id)
+
+    def capture_fingerprint(self) -> bool:
+        return self.fingerprint_service.capture_fingerprint()
+    def match_and_store_fp(self)-> int:
+        return self.fingerprint_service.match_and_store()

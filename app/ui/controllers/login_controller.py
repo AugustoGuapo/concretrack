@@ -10,7 +10,7 @@ class LoginController:
         self.auth_service = AuthenticationService(
             UserRepositoryImpl(), BcryptHasherImpl()
         )
-        self.fingerprintSensor = None #FingerprintSensor()
+        self.fingerprintSensor = FingerprintSensor()
 
     def login(self, username: str, password: str):
         user = self.auth_service.authenticateUserCredentials(

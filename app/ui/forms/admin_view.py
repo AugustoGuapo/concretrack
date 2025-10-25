@@ -263,44 +263,44 @@ class AdminView(BaseView):
             relief="flat",
             command=self.volver_a_lista
         ).pack(pady=10)
+                # Botones
+        tk.Button(
+            form_frame,
+            text="procesar huella",
+            font=("Arial", 22, "bold"),
+            bg="#4CAF50",
+            fg="white",
+            height=2,
+            width=20,
+            relief="flat",
+            command=self.mostrar_ventana_biometrica
+        ).pack(pady=40)
 
         
 
-    def mostrar_ventana_biometrica(self, nombre, apellido, contrasena, rol, ventana2):
-        """Ventana para registro biométrico (huella dactilar)."""
-        ventana = tk.Toplevel()
-        ventana.title("Registro Biométrico")
-        ventana.geometry("800x600")
-        ventana.configure(bg="white")
-        fuente_instruccion = ("Arial", 24, "bold")
+    def mostrar_ventana_biometrica(self) -> int:
 
-        try:
-            img_tk = readImage("app/ui/images/fingerPrint.png", size=(300, 300))
-            label_imagen = tk.Label(ventana, image=img_tk, bg="white")
-            label_imagen.image = img_tk  # importante: mantener referencia
-            label_imagen.pack(pady=40)
-        except Exception as e:
-            tk.Label(ventana, text="[Imagen no encontrada]", font=fuente_instruccion, bg="white", fg="red").pack(pady=40)
-
-        texto_instruccion = tk.StringVar()
+        
         texto_instruccion.set("Por favor, coloque su dedo en el lector biométrico")
-        label_dinamico = ttk.Label(ventana, textvariable=texto_instruccion, font=fuente_instruccion, background="white")
-        label_dinamico.pack(pady=20)
+        
 
         while True:
             try:
-                self.admin_controller.capture_fingerprint()
+                isAble = self.admin_controller.capture_fingerprint()
             except Exception as e:
                 texto_instruccion.set("Huella registrada con usuario distinto, use otra")
-                return
+                return -1
 
             try:
                 texto_instruccion.set("Leyendo huella...")
                 time.sleep(2)
                 texto_instruccion.set("Huella capturada, procesando...")
                 time.sleep(2)
+                if not isAble:
+                    messagebox.showinfo("Huella previamente registrada, utilice otra")
+                    return
                 texto_instruccion.set("Coloque su dedo nuevamente para registrar")
-                fingerprintId = self.admin_controller.store_fingerprint()
+                fingerprintId = self.admin_controller.match_and_store_fp()
             except Exception as e:
                 texto_instruccion.set("Error al registrar huella, intente nuevamente")
                 time.sleep(2)
@@ -308,17 +308,9 @@ class AdminView(BaseView):
 
             break
 
-        self.admin_controller.create_user(
-            firstName=nombre,
-            lastName=apellido,
-            password=contrasena,
-            role=rol,
-            fingerprintId=fingerprintId
-        )
-
         texto_instruccion.set("Usuario registrado exitosamente")
         ventana.destroy()
-        ventana2.destroy()
+        print(f'huella registrada #{fingerprintId}')
 
     def agregar_usuario(self):
         self.mostrar_ventana_emergente()
@@ -328,6 +320,14 @@ class AdminView(BaseView):
         if selected_index:
             index = selected_index[0]
             user_id = self.usuarios[index]["id"]
+            print(self.usuarios[index])
+            answer = messagebox.askyesno("PRECAUCIÓN", f"Va a eliminar al usuario {self.usuarios[index]['nombre']} ¿está seguro?")
+            if not answer:
+                return
+            else:
+                second_answer = messagebox.askyesno("¿ESTÁS SEGURO?", "El eliminado de un usuario es una acción sin retorno, ¿está seguro de continuar?")
+                if not second_answer:
+                    return
             self.admin_controller.delete_user_logically(user_id)
             self.usuarios = self.admin_controller.get_all_users()
             self.actualizar_lista()
@@ -370,10 +370,20 @@ class AdminView(BaseView):
         entry_last_name.insert(0, last_name_default)
         entry_last_name.grid(row=1, column=1, padx=10, pady=5)
 
-        tk.Label(form_frame, text="Rol:", font=("Arial", 16), bg="#fcfcfc").grid(row=2, column=0, sticky="e", padx=10, pady=5)
-        entry_rol = tk.Entry(form_frame, font=("Arial", 16))
-        entry_rol.insert(0, rol_actual)
-        entry_rol.grid(row=2, column=1, padx=10, pady=5)
+                # Rol
+        tk.Label(form_frame, text="Rol", font=("Arial", 16), bg="white").grid(row=2, column=0, sticky='e', padx=10, pady=5)
+        rol_var = tk.StringVar(form_frame)
+        rol_var.set("Seleccionar rol")
+
+        opciones_rol = ["Administrador", "Operario"]
+        opciones_rol_enum = {
+            "Administrador": UserRole.ADMIN,
+            "Operario": UserRole.OPERATIVE
+        }
+
+        menu_rol = tk.OptionMenu(form_frame, rol_var, *opciones_rol)
+        menu_rol.config(font=("Arial", 16))
+        menu_rol.grid(row=2, column=1, padx=10, pady=5)
 
         tk.Label(form_frame, text="Usuario:", font=("Arial", 16), bg="#fcfcfc").grid(row=3, column=0, sticky="e", padx=10, pady=5)
         entry_username = tk.Entry(form_frame, font=("Arial", 16))
@@ -391,7 +401,7 @@ class AdminView(BaseView):
         def guardar():
             first_name = entry_first_name.get().strip()
             last_name = entry_last_name.get().strip()
-            new_rol = entry_rol.get().strip()
+            new_rol = opciones_rol_enum[rol_var.get()]
             new_username = entry_username.get().strip()
             new_password = entry_password.get().strip()
 
@@ -405,13 +415,6 @@ class AdminView(BaseView):
             # update_user(user_id, first_name, last_name, role, username=None, password=None)
             # Convertimos rol si el usuario escribe "Administrador"/"Operario" a los enums si quieres:
             rol_param = new_rol
-            # Si usas UserRole en otras partes, podrías mapear aquí:
-            if new_rol.lower() in ("administrador", "admin", "administrator"):
-                from app.models.user_role import UserRole
-                rol_param = UserRole.ADMIN
-            elif new_rol.lower() in ("operario", "operativo", "operative"):
-                from app.models.user_role import UserRole
-                rol_param = UserRole.OPERATIVE
 
             # Llamada final (password en texto plano; AdminController se encargará de hashearlo)
             self.admin_controller.update_user(user_id, first_name, last_name, rol_param, new_username, new_password if new_password else None)
@@ -526,6 +529,10 @@ class AdminView(BaseView):
 
         self.listbox.bind("<Button-1>", self.toggle_seleccion)
 
+    def on_show(self):
+        for widget in self.header_frame.winfo_children():
+            if isinstance(widget, tk.Label):
+                widget.config(text=SessionState.get_user().getFullName())
         
 class BotonRedondeado(tk.Canvas):
     def __init__(self, parent, width=200, height=60, radio=25,

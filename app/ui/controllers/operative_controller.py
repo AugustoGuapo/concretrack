@@ -22,6 +22,7 @@ class OperativeController:
             logging.error("No user is currently logged in.")
             return False
         working_user = self.fingerprintSensor.check_fingerprint()
+        print(f'El usuario que intenta cerrar sesión tiene la huella #{working_user}')
         if working_user == -1:
             return False
         if working_user == user.fingerprintId:

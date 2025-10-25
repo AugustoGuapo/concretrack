@@ -3,7 +3,7 @@ from app.ui.controllers.operative_controller import OperativeController
 from app.state.session_state import SessionState
 from app.state.sample_state import SampleState
 from app.ui.forms.base_view import BaseView
-
+from tkinter import messagebox
 
 class SampleListFrame(BaseView):
     green = "#00FF00"
@@ -147,6 +147,9 @@ class SampleListFrame(BaseView):
                 pass
             else:
                 break
+        if counter == 5:
+            messagebox.showerror('Error','La huella no coincide con el usuario logeado, intente nuevamente')
+            return
         """Cierra sesión y redirige al Login."""
         SessionState.clear_user()
         if hasattr(self.view_controller, "show_frame"):
