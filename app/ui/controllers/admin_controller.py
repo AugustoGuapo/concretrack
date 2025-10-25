@@ -4,7 +4,7 @@ from app.services.implementations.bcrypt_hasher_impl import BcryptHasherImpl
 from app.services.implementations.fingerprint_impl import FingerprintImpl
 from app.core.exceptions.fingerprint_exceptions import SensorStorageException
 from app.models.user_role import UserRole  # 🔹 Import necesario
-
+from app.services.implementations.bcrypt_hasher_impl import BcryptHasherImpl
 
 class AdminController:
     def __init__(self):
@@ -37,17 +37,33 @@ class AdminController:
     def get_all_users(self):
         return self.user_repo.getAllActiveUsers()
 
-    # Editar usuario existente
-    def update_user(self, user_id, first_name, last_name, role, password=None):
-        """Actualiza los datos del usuario (nombre, apellido, rol y contraseña opcional)."""
-        # Si el usuario ingresó una nueva contraseña
+        # Editar usuario existente
+
+    def update_user(self, user_id, first_name, last_name, role, username=None, password=None):
+        """
+        Actualiza nombre, apellido, rol y opcionalmente username y password.
+        - role puede ser UserRole o str.
+        - password es la contraseña en texto plano (si se pasa, se hace hash).
+        """
+         # Normalizar rol (a string/enum)
+        if isinstance(role, str):
+            # intentar convertir a UserRole si corresponde, sino usar el string tal cual
+            try:
+                role_enum = UserRole[role.upper()]
+            except Exception:
+                role_enum = role
+        else:
+            role_enum = role
+        # Si viene password, hashearlo
+        password_hash = None
         if password and password.strip():
             hasher = BcryptHasherImpl()
             password_hash = hasher.hash(password)
-            self.user_repo.updateUser(user_id, first_name, last_name, role, password_hash)
-        else:
-            # Si no cambia la contraseña, mantenla igual
-            self.user_repo.updateUser(user_id, first_name, last_name, role)
+
+        # Delegar al repo:
+        # Si username no se pasa, el repo puede recibir None y mantener el mismo (según impl)
+        self.user_repo.updateUser(user_id, first_name, last_name, role_enum, username, password_hash)
+
 
 
     # Eliminar usuario lógicamente (is_active = 0)
