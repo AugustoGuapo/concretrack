@@ -226,14 +226,23 @@ class AdminView(BaseView):
                 messagebox.showerror("Error", "Completa todos los campos correctamente.")
                 return
 
+            # Primero capturamos la huella y obtenemos su id
+            fingerprint_id = self.mostrar_ventana_biometrica()
+            if fingerprint_id is None or (isinstance(fingerprint_id, int) and fingerprint_id < 0):
+                messagebox.showerror("Error", "No se pudo obtener la huella. Registro cancelado.")
+                return
+
             try:
+                # Si el controlador acepta fingerprint_id se lo pasamos como kwarg.
+                # Si no, quitar el argumento y adaptar según la firma de AdminController.
                 self.admin_controller.create_user(
                     firstName=nombre,
                     lastName=apellido,
                     password=contrasena,
-                    role=rol
+                    role=rol,
+                    fingerprintId=fingerprint_id
                 )
-                messagebox.showinfo("Éxito", "Usuario registrado correctamente")
+                messagebox.showinfo("Éxito", f"Usuario registrado correctamente (huella #{fingerprint_id})")
                 self.usuarios = self.admin_controller.get_all_users()
                 self.volver_a_lista()
             except Exception as e:
@@ -264,46 +273,71 @@ class AdminView(BaseView):
             command=self.volver_a_lista
         ).pack(pady=10)
                 # Botones
-        tk.Button(
-            form_frame,
-            text="procesar huella",
-            font=("Arial", 22, "bold"),
-            bg="#4CAF50",
-            fg="white",
-            height=2,
-            width=20,
-            relief="flat",
-            command=self.mostrar_ventana_biometrica
-        ).pack(pady=40)
+
 
         
 
     def mostrar_ventana_biometrica(self) -> int:
 
-        
-        texto_instruccion.set("Por favor, coloque su dedo en el lector biométrico")
-        
+        # Creamos una ventana modal para mostrar instrucciones durante la captura
+        ventana = tk.Toplevel(self)
+        ventana.title("Captura de huella")
+        ventana.transient(self)
+        ventana.grab_set()
+        ventana.geometry("600x200")
+
+        texto_instruccion = tk.StringVar(ventana, value="Por favor, coloque su dedo en el lector biométrico")
+        label_instr = tk.Label(ventana, textvariable=texto_instruccion, font=("Arial", 18))
+        label_instr.pack(pady=20, padx=20)
+
+        # Botón cancelar por si se desea abortar
+        def cancelar():
+            ventana.destroy()
+
+        btn_cancel = tk.Button(ventana, text="Cancelar", font=("Arial", 14), command=cancelar)
+        btn_cancel.pack(pady=10)
+
+        ventana.update()
+
+        fingerprintId = None
 
         while True:
             try:
+                texto_instruccion.set("Esperando huella...")
+                ventana.update()
+                # Llamada al controlador para iniciar captura (puede bloquear o lanzar excepción)
                 isAble = self.admin_controller.capture_fingerprint()
             except Exception as e:
-                texto_instruccion.set("Huella registrada con usuario distinto, use otra")
-                return -1
+                texto_instruccion.set("Huella registrada con otro usuario o error. Use otra huella.")
+                ventana.update()
+                time.sleep(1.5)
+                ventana.destroy()
+                return None
 
             try:
                 texto_instruccion.set("Leyendo huella...")
-                time.sleep(2)
+                ventana.update()
+                time.sleep(1.0)
+
                 texto_instruccion.set("Huella capturada, procesando...")
-                time.sleep(2)
+                ventana.update()
+                time.sleep(1.0)
+
                 if not isAble:
-                    messagebox.showinfo("Huella previamente registrada, utilice otra")
-                    return
-                texto_instruccion.set("Coloque su dedo nuevamente para registrar")
+                    # Huella previamente registrada
+                    messagebox.showinfo("Información", "Huella previamente registrada, utilice otra")
+                    ventana.destroy()
+                    return None
+
+                texto_instruccion.set("Coloque su dedo nuevamente para finalizar registro...")
+                ventana.update()
+                # match_and_store_fp debería devolver el id de la huella almacenada
                 fingerprintId = self.admin_controller.match_and_store_fp()
             except Exception as e:
                 texto_instruccion.set("Error al registrar huella, intente nuevamente")
-                time.sleep(2)
+                ventana.update()
+                time.sleep(1.5)
+                # Reintentar: continuar el while
                 continue
 
             break
@@ -311,6 +345,7 @@ class AdminView(BaseView):
         texto_instruccion.set("Usuario registrado exitosamente")
         ventana.destroy()
         print(f'huella registrada #{fingerprintId}')
+        return fingerprintId
 
     def agregar_usuario(self):
         self.mostrar_ventana_emergente()
@@ -533,6 +568,7 @@ class AdminView(BaseView):
         for widget in self.header_frame.winfo_children():
             if isinstance(widget, tk.Label):
                 widget.config(text=SessionState.get_user().getFullName())
+        self.volver_a_lista()
         
 class BotonRedondeado(tk.Canvas):
     def __init__(self, parent, width=200, height=60, radio=25,
