@@ -1,17 +1,17 @@
--- Tabla: clients
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS clients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL
 );
 
--- Tabla: projects
 CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    client_id INTEGER NOT NULL
+    client_id INTEGER NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES clients(id)
 );
 
--- Tabla: families
 CREATE TABLE IF NOT EXISTS families (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
@@ -20,26 +20,31 @@ CREATE TABLE IF NOT EXISTS families (
     height FLOAT,
     classification INTEGER,
     client_id INTEGER NOT NULL,
-    project_id INTEGER NOT NULL
+    project_id INTEGER NOT NULL,
+    FOREIGN KEY (client_id) REFERENCES clients(id),
+    FOREIGN KEY (project_id) REFERENCES projects(id)
 );
 
--- Tabla: users
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     role TEXT NOT NULL,
     username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    fingerprint_id INTEGER NOT NULL,
+    is_active INTEGER NOT NULL
 );
 
--- Tabla: members
 CREATE TABLE IF NOT EXISTS members (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     family_id INTEGER NOT NULL,
-    date_of_fracture DATE,     -- fecha programada para fracturar
-    fractured_at DATE,         -- fecha real en que se fracturó
+    date_of_fracture DATE NOT NULL,
+    fractured_at DATE,
     result INTEGER,
-    operative INTEGER,
-    is_reported INTEGER
+    operative INTEGER,        
+    is_reported INTEGER,
+
+    FOREIGN KEY (family_id) REFERENCES families(id),
+    FOREIGN KEY (operative) REFERENCES users(id)
 );

@@ -36,7 +36,7 @@ class MemberRepository:
         """Fetches all members whose fracture date is between 01/01/1970 and today."""
         cursor = self.db_connection.cursor()
         cursor.execute(
-            "SELECT * FROM members WHERE date_of_fracture BETWEEN '1970-01-01' AND DATE('now', 'localtime') and result is null OR is_reported is null;"
+            "SELECT * FROM members WHERE date_of_fracture BETWEEN '1970-01-01' AND DATE('now', 'localtime') and result is null OR result is not null and is_reported is null;"
         )
         rows = cursor.fetchall()
         members = []
