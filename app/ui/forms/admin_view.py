@@ -1,15 +1,34 @@
+# app/ui/forms/admin_view.py
+
 import tkinter as tk
-from tkinter import ttk
+import tkinter.messagebox as messagebox
 from app.ui.controllers.admin_controller import AdminController
 from app.ui.forms.base_view import BaseView
 from app.models.user_role import UserRole
-from PIL import Image, ImageTk
-from app.ui.forms.login import BotonRedondeado
-from app.ui.utils.generic import readImage
-from app.state.session_state import SessionState  # Import necesario para logout
+from app.state.session_state import SessionState
 import time
-import tkinter.messagebox
-from tkinter import messagebox
+
+# ----------------- Estilos globales para coherencia visual -----------------
+ESTILOS = {
+    "bg_main": "#F8F9FA",        # Fondo claro
+    "bg_header": "#E3F2FD",      # Azul muy suave
+    "fg_header_text": "#0D47A1", # Azul oscuro para texto
+    "btn_add_bg": "#4CAF50",
+    "btn_add_hover": "#388E3C",
+    "btn_edit_bg": "#FF9800",
+    "btn_edit_hover": "#F57C00",
+    "btn_del_bg": "#F44336",
+    "btn_del_hover": "#D32F2F",
+    "list_bg": "white",
+    "list_fg": "#333333",
+    "list_select_bg": "#2196F3",
+    "list_select_fg": "white",
+    "font_title": ("Segoe UI", 32, "bold"),
+    "font_header": ("Segoe UI", 28, "bold"),
+    "font_button": ("Segoe UI", 36, "bold"),
+    "font_list": ("Segoe UI", 30),
+    "font_form": ("Segoe UI", 28),
+}
 
 class AdminView(BaseView):
     def __init__(self, parent, view_controller):
@@ -21,100 +40,19 @@ class AdminView(BaseView):
             "operative": "Operario"
         }
 
-        # Configuración principal
-        self.config(bg='gray')
-
-        # Crear encabezado con usuario y botón de cerrar sesión
+        self.config(bg=ESTILOS["bg_main"])
         self.create_header()
 
-        # Frame principal para contenido
-        self.frame_content = tk.Frame(self, bg='#fcfcfc')
-        self.frame_content.pack(side="top", expand=True, fill=tk.BOTH, pady=(10, 0))  # Dejamos espacio para el header
+        self.frame_content = tk.Frame(self, bg=ESTILOS["bg_main"])
+        self.frame_content.pack(side="top", expand=True, fill=tk.BOTH, pady=(10, 0))
 
-        # Frame para los botones
-        button_frame = tk.Frame(self.frame_content, bg='#fcfcfc')
-        button_frame.pack(pady=20)
-
-        # Botón Agregar
-        self.btn_agregar = BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=80,
-            radio=40,
-            texto="Agregar",
-            color_fondo="#4CAF50",
-            color_hover="#388E3C",
-            color_texto="white",
-            font=("Times", 30, "bold"),
-            comando=self.agregar_usuario
-        )
-        self.btn_agregar.grid(row=0, column=0, padx=10)
-
-        # Botón Eliminar
-        self.btn_eliminar = BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=80,
-            radio=40,
-            texto="Eliminar",
-            color_fondo="#F44336",
-            color_hover="#D32F2F",
-            color_texto="white",
-            font=("Times", 30, "bold"),
-            comando=self.eliminar_usuario
-        )
-        self.btn_eliminar.grid(row=0, column=1, padx=10)
-
-        # Botón Editar
-        self.btn_editar = BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=80,
-            radio=40,
-            texto="Editar",
-            color_fondo="#FF9800",
-            color_hover="#F57C00",
-            color_texto="white",
-            font=("Times", 30, "bold"),
-            comando=self.editar_usuario
-        )
-        self.btn_editar.grid(row=0, column=2, padx=10)
-
-        # Frame para la lista de usuarios
-        list_frame = tk.Frame(self.frame_content, bg='#fcfcfc')
-        list_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-
-        # Listbox con Scrollbar
-        # Usar fuente monoespaciada DejaVu Sans Mono, tamaño 4 puntos mayor (26)
-        # El ancho del listbox se ajustará dinámicamente en actualizar_lista() para centrar la lista.
-        self.listbox = tk.Listbox(
-            list_frame,
-            font=("DejaVu Sans Mono", 26),
-            selectbackground="#4CAF50",
-            selectforeground="white",
-            activestyle="none",
-            bd=0,
-            highlightthickness=0
-        )
-        # Empaquetamos centrado (no expandimos horizontalmente); ancho se ajusta en actualizar_lista
-        self.listbox.pack(anchor="center", pady=10)
-        scrollbar_y = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.listbox.yview)
-        scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
-        self.listbox.config(yscrollcommand=scrollbar_y.set)
-
-        # Datos iniciales (puedes cambiar por cargar desde JSON)
-        self.usuarios = self.admin_controller.get_all_users()
-
-        self.actualizar_lista()
-        self.validar_estado_botones()
-
-        # Vincular evento de selección/deselección
-        self.listbox.bind("<Button-1>", self.toggle_seleccion)
+        self.create_buttons()
+        self.create_user_list()
 
     def create_header(self):
-        """Crea el encabezado con nombre de usuario y botón de cierre de sesión."""
-        self.header_frame = tk.Frame(self, bg="#BDE5F8", bd=1, relief=tk.RAISED)
-        self.header_frame.pack(fill=tk.X, padx=5, pady=5)
+        self.header_frame = tk.Frame(self, bg=ESTILOS["bg_header"], height=80)
+        self.header_frame.pack(fill=tk.X, padx=20, pady=15)
+        self.header_frame.pack_propagate(False)
 
         try:
             username = SessionState.get_user().getFullName()
@@ -122,21 +60,275 @@ class AdminView(BaseView):
             username = "Invitado"
 
         user_label = tk.Label(
-            self.header_frame, text=username, bg="#BDE5F8",
-            fg="#005970", font=("Arial", 20, "bold")
+            self.header_frame,
+            text=username,
+            bg=ESTILOS["bg_header"],
+            fg=ESTILOS["fg_header_text"],
+            font=ESTILOS["font_header"]
         )
-        user_label.pack(side=tk.LEFT, padx=10, pady=5)
+        user_label.pack(side=tk.LEFT, padx=20)
 
         close_button = tk.Button(
-            self.header_frame, text="Cerrar Sesión  ➤", bg="#FF0000",
-            fg="white", font=("Arial", 20, "bold"), bd=0,
-            activebackground="#CC0000", activeforeground="white",
+            self.header_frame,
+            text="Cerrar Sesión  ➤",
+            bg="#FF5252",
+            fg="black",  # 👈 Texto negro
+            font=("Segoe UI", 28, "bold"),  # 👈 Negrita
+            bd=0,
+            activebackground="#FF1744",
+            activeforeground="black",
+            width=18,
+            height=2,
+            relief="flat",
             command=self.logout
         )
-        close_button.pack(side=tk.RIGHT, padx=10, pady=5)
+        close_button.pack(side=tk.RIGHT, padx=20)
+
+    def create_buttons(self):
+        button_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
+        button_frame.pack(pady=30)
+
+        self.btn_agregar = BotonRedondeado(
+            parent=button_frame,
+            width=480,
+            height=100,
+            radio=50,
+            texto="Agregar",
+            color_fondo=ESTILOS["btn_add_bg"],
+            color_hover=ESTILOS["btn_add_hover"],
+            color_texto="white",
+            font=ESTILOS["font_button"],
+            comando=self.agregar_usuario
+        )
+        self.btn_agregar.grid(row=0, column=0, padx=25)
+
+        self.btn_eliminar = BotonRedondeado(
+            parent=button_frame,
+            width=480,
+            height=100,
+            radio=50,
+            texto="Eliminar",
+            color_fondo=ESTILOS["btn_del_bg"],
+            color_hover=ESTILOS["btn_del_hover"],
+            color_texto="white",
+            font=ESTILOS["font_button"],
+            comando=self.eliminar_usuario
+        )
+        self.btn_eliminar.grid(row=0, column=1, padx=25)
+
+        self.btn_editar = BotonRedondeado(
+            parent=button_frame,
+            width=480,
+            height=100,
+            radio=50,
+            texto="Editar",
+            color_fondo=ESTILOS["btn_edit_bg"],
+            color_hover=ESTILOS["btn_edit_hover"],
+            color_texto="white",
+            font=ESTILOS["font_button"],
+            comando=self.editar_usuario
+        )
+        self.btn_editar.grid(row=0, column=2, padx=25)
+
+    def create_user_list(self):
+        list_container = tk.Frame(self.frame_content, bg="lightgray", padx=2, pady=2)
+        list_container.pack(fill=tk.BOTH, expand=True, padx=40, pady=(10, 30))
+
+        list_frame = tk.Frame(list_container, bg=ESTILOS["list_bg"])
+        list_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Encabezado de columnas
+        header_frame = tk.Frame(list_frame, bg=ESTILOS["list_bg"])
+        header_frame.pack(fill=tk.X, padx=20, pady=(10, 5))
+
+        tk.Label(
+            header_frame,
+            text="Nombre",
+            font=("Segoe UI", 26, "bold"),
+            bg=ESTILOS["list_bg"],
+            fg="#555555",
+            anchor="w"
+        ).grid(row=0, column=0, sticky="w")
+
+        tk.Label(
+            header_frame,
+            text="Rol",
+            font=("Segoe UI", 26, "bold"),
+            bg=ESTILOS["list_bg"],
+            fg="#555555",
+            anchor="w"
+        ).grid(row=0, column=1, sticky="w", padx=(30, 0))
+
+        tk.Label(
+            header_frame,
+            text="Usuario",
+            font=("Segoe UI", 26, "bold"),
+            bg=ESTILOS["list_bg"],
+            fg="#555555",
+            anchor="w"
+        ).grid(row=0, column=2, sticky="w", padx=(30, 0))
+
+        separator = tk.Frame(list_frame, bg="#DDDDDD", height=2)
+        separator.pack(fill=tk.X, padx=20, pady=(0, 5))
+
+        # Canvas con scroll para la lista
+        canvas = tk.Canvas(list_frame, bg=ESTILOS["list_bg"], highlightthickness=0)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
+
+        scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        canvas.config(yscrollcommand=scrollbar.set)
+
+        # Frame dentro del canvas
+        self.canvas_frame = tk.Frame(canvas, bg=ESTILOS["list_bg"])
+        canvas.create_window((0, 0), window=self.canvas_frame, anchor="nw")
+
+        # Vincular scroll al tamaño del frame
+        self.canvas_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        # Almacenar widgets de filas para manejar selección
+        self.row_widgets = []
+
+        # Cargar datos
+        self.usuarios = self.admin_controller.get_all_users()
+        self.actualizar_lista()
+        self.validar_estado_botones()
+
+    def actualizar_lista(self):
+        # Limpiar filas anteriores
+        for widget in self.canvas_frame.winfo_children():
+            widget.destroy()
+        self.row_widgets.clear()
+
+        nombres = [u.get('nombre', '') for u in self.usuarios]
+        roles = [self.role_dict.get(u.get('rol', ''), "Desconocido") for u in self.usuarios]
+        usuariosnames = [u.get('username', '') for u in self.usuarios]
+
+        w1 = max(20, max([len(s) for s in nombres], default=20))
+        w2 = max(15, max([len(s) for s in roles], default=15))
+        w3 = max(15, max([len(s) for s in usuariosnames], default=15))
+
+        for i, (usuario, rol_texto) in enumerate(zip(self.usuarios, roles)):
+            nombre = usuario.get('nombre', '')
+            rol = rol_texto
+            username = usuario.get('username', '')
+
+            # Crear frame para la fila
+            row_frame = tk.Frame(self.canvas_frame, bg=ESTILOS["list_bg"], height=80)
+            row_frame.pack(fill=tk.X, padx=10, pady=5)
+            row_frame.pack_propagate(False)
+
+            # Configurar columnas: 1/3, 1/3, 1/3
+            row_frame.grid_columnconfigure(0, weight=1)
+            row_frame.grid_columnconfigure(1, weight=1)
+            row_frame.grid_columnconfigure(2, weight=1)
+
+            # Nombre: izquierda
+            lbl_nombre = tk.Label(
+                row_frame,
+                text=nombre,
+                font=ESTILOS["font_list"],
+                bg=ESTILOS["list_bg"],
+                fg=ESTILOS["list_fg"],
+                anchor="w"
+            )
+            lbl_nombre.grid(row=0, column=0, sticky="w", padx=(0, 10))
+
+            # Rol: centro
+            lbl_rol = tk.Label(
+                row_frame,
+                text=rol,
+                font=ESTILOS["font_list"],
+                bg=ESTILOS["list_bg"],
+                fg=ESTILOS["list_fg"],
+                anchor="center"
+            )
+            lbl_rol.grid(row=0, column=1, sticky="", padx=10)
+
+            # Usuario: derecha
+            lbl_username = tk.Label(
+                row_frame,
+                text=username,
+                font=ESTILOS["font_list"],
+                bg=ESTILOS["list_bg"],
+                fg=ESTILOS["list_fg"],
+                anchor="e"
+            )
+            lbl_username.grid(row=0, column=2, sticky="e", padx=(10, 0))
+
+            # Guardar datos de la fila
+            row_data = {
+                "frame": row_frame,
+                "nombre": lbl_nombre,
+                "rol": lbl_rol,
+                "username": lbl_username,
+                "index": i
+            }
+            self.row_widgets.append(row_data)
+
+            # 👇 ENLACE CORRECTO: clic en la fila completa
+            def make_handler(idx):
+                return lambda e: self.select_row(idx)
+            row_frame.bind("<Button-1>", make_handler(i))
+            lbl_nombre.bind("<Button-1>", make_handler(i))
+            lbl_rol.bind("<Button-1>", make_handler(i))
+            lbl_username.bind("<Button-1>", make_handler(i))
+
+    def select_row(self, index):
+        # Si ya está seleccionada la misma fila → deseleccionar
+        if hasattr(self, 'selected_index') and self.selected_index == index:
+            # Deseleccionar
+            for data in self.row_widgets:
+                data["frame"].config(bg=ESTILOS["list_bg"])
+                data["nombre"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+                data["rol"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+                data["username"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+            delattr(self, 'selected_index')
+            self.btn_editar.config(state=tk.DISABLED)
+            self.btn_eliminar.config(state=tk.DISABLED)
+        else:
+            # Deseleccionar todas
+            for data in self.row_widgets:
+                data["frame"].config(bg=ESTILOS["list_bg"])
+                data["nombre"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+                data["rol"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+                data["username"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+
+            # Seleccionar la nueva
+            selected = self.row_widgets[index]
+            selected["frame"].config(bg=ESTILOS["list_select_bg"])
+            selected["nombre"].config(bg=ESTILOS["list_select_bg"], fg=ESTILOS["list_select_fg"])
+            selected["rol"].config(bg=ESTILOS["list_select_bg"], fg=ESTILOS["list_select_fg"])
+            selected["username"].config(bg=ESTILOS["list_select_bg"], fg=ESTILOS["list_select_fg"])
+
+            self.selected_index = index
+            self.btn_editar.config(state=tk.NORMAL)
+            self.btn_eliminar.config(state=tk.NORMAL)
+
+    def toggle_seleccion(self, event):
+        # Si el clic no fue en una fila, deseleccionar
+        if not hasattr(self, 'selected_index'):
+            return
+        widget = event.widget
+        if widget != self.canvas_frame:
+            return
+        # Deseleccionar si se hace clic fuera de una fila
+        for data in self.row_widgets:
+            data["frame"].config(bg=ESTILOS["list_bg"])
+            data["nombre"].config(fg=ESTILOS["list_fg"])
+            data["rol"].config(fg=ESTILOS["list_fg"])
+            data["username"].config(fg=ESTILOS["list_fg"])
+        self.btn_editar.config(state=tk.DISABLED)
+        self.btn_eliminar.config(state=tk.DISABLED)
+        delattr(self, 'selected_index')
+
+    def validar_estado_botones(self):
+        estado_base = tk.NORMAL if self.usuarios else tk.DISABLED
+        self.btn_eliminar.config(state=estado_base)
+        self.btn_editar.config(state=estado_base)
+        # No forzar DISABLED aquí; dejar que select_row lo controle
 
     def logout(self):
-        """Cierra sesión y redirige al Login."""
         SessionState.clear_user()
         if hasattr(self.view_controller, "show_frame"):
             from app.ui.forms.login import App as Login
@@ -147,98 +339,71 @@ class AdminView(BaseView):
             if login_frame and hasattr(login_frame, "clear_fields"):
                 login_frame.clear_fields()
 
-    def toggle_seleccion(self, event):
-        """Permite seleccionar o deseleccionar un elemento en la lista."""
-        widget = event.widget
-        index = widget.nearest(event.y)  # Índice del elemento bajo el clic
-        if index == -1:
-            return  # Fuera de rango
-        if index in widget.curselection():
-            # Si ya estaba seleccionado, deseleccionarlo
-            widget.selection_clear(index)
-            # Desactivar botones si no hay selección
-            self.btn_editar.config(state=tk.DISABLED)
-            self.btn_eliminar.config(state=tk.DISABLED)
-        else:
-            # Tkinter ya maneja la selección automática
-            pass
+    def agregar_usuario(self):
+        self.mostrar_ventana_emergente()
 
-    def actualizar_lista(self):
-        """Actualiza la lista de usuarios mostrada."""
-        # Limpiar y construir tabla alineada por columnas (monoespaciada).
-        # No mostramos cabecera ni separador según lo solicitado.
-        self.listbox.delete(0, tk.END)
+    def eliminar_usuario(self):
+        if not hasattr(self, 'selected_index'):
+            return
+        index = self.selected_index
+        user = self.usuarios[index]
+        if messagebox.askyesno("Confirmar", f"¿Eliminar a {user['nombre']}?") and \
+           messagebox.askyesno("¡Atención!", "Esta acción es irreversible. ¿Continuar?"):
+            self.admin_controller.delete_user_logically(user["id"])
+            self.usuarios = self.admin_controller.get_all_users()
+            self.actualizar_lista()
+            self.validar_estado_botones()
+            if hasattr(self, 'selected_index'):
+                delattr(self, 'selected_index')
 
-        nombres = [u.get('nombre', '') for u in self.usuarios]
-        roles = [self.role_dict.get(u.get('rol', ''), "Desconocido") for u in self.usuarios]
-        usuariosnames = [u.get('username', '') for u in self.usuarios]
+    def editar_usuario(self):
+        if not hasattr(self, 'selected_index'):
+            return
+        index = self.selected_index
+        user = self.usuarios[index]
+        self.show_edit_dialog(index, user["nombre"], user["rol"], user["username"])
 
-        # Anchura por columna basada en el valor más largo (mínimo el título)
-        w1 = max([len(s) for s in nombres] + [len("Nombre")])
-        w2 = max([len(s) for s in roles] + [len("Rol")])
-        w3 = max([len(s) for s in usuariosnames] + [len("Usuario")])
+    def volver_a_lista(self):
+        for widget in self.frame_content.winfo_children():
+            widget.destroy()
+        self.create_buttons()
+        self.create_user_list()
 
-        # Construir filas usando ancho fijo por columna (tipo CLI)
-        lines = []
-        for usuario, rol_texto in zip(self.usuarios, roles):
-            nombre = usuario.get('nombre', '')
-            username = usuario.get('username', '')
-            line = f"{nombre:<{w1}}  {rol_texto:<{w2}}  {username:<{w3}}"
-            lines.append(line)
+    def on_show(self):
+        for w in self.header_frame.winfo_children():
+            if isinstance(w, tk.Label):
+                try:
+                    w.config(text=SessionState.get_user().getFullName())
+                except:
+                    w.config(text="Invitado")
+        self.volver_a_lista()
 
-        # Ajustar el ancho del listbox en caracteres para que las líneas encajen y la widget pueda centrarse
-        total_chars = w1 + w2 + w3 + 4
-        try:
-            self.listbox.config(width=total_chars)
-        except Exception:
-            pass
-
-        # Insertar las filas
-        for line in lines:
-            self.listbox.insert(tk.END, line)
-
-        # Centrar el listbox en su frame: aseguramos que esté empacado centrado.
-        # (Ya se hace en __init__; aquí reforzamos tamaño para que la visual quede centrada)
-        self.listbox.update_idletasks()
-
-    def validar_estado_botones(self):
-        """Habilita o deshabilita botones según si hay usuarios disponibles."""
-        estado = tk.NORMAL if self.usuarios else tk.DISABLED
-        self.btn_eliminar.config(state=estado)
-        self.btn_editar.config(state=estado)
-
+    # --- Formularios y biometría ---
     def mostrar_ventana_emergente(self):
-        """Muestra un formulario dentro del mismo frame (no ventana separada)."""
-        # Limpiar contenido actual
         for widget in self.frame_content.winfo_children():
             widget.destroy()
 
         form_frame = tk.Frame(self.frame_content, bg="white")
-        form_frame.pack(fill="both", expand=True)
+        form_frame.pack(fill="both", expand=True, padx=40, pady=30)
 
-        fuente = ("Arial", 20)
-        ancho_entry = 30
-        pady_campo = 20
+        fuente = ESTILOS["font_form"]
+        ancho_entry = 35
+        pady_campo = 25
 
-        # Título
-        tk.Label(form_frame, text="Registrar nuevo usuario", font=("Arial", 28, "bold"), bg="white").pack(pady=20)
+        tk.Label(form_frame, text="Registrar nuevo usuario", font=ESTILOS["font_title"], bg="white").pack(pady=30)
 
-        # Nombre
         tk.Label(form_frame, text="Nombre", font=fuente, bg="white").pack(pady=(pady_campo, 5))
         entry_nombre = tk.Entry(form_frame, font=fuente, width=ancho_entry)
         entry_nombre.pack()
 
-        # Apellido
         tk.Label(form_frame, text="Apellido", font=fuente, bg="white").pack(pady=(pady_campo, 5))
         entry_apellido = tk.Entry(form_frame, font=fuente, width=ancho_entry)
         entry_apellido.pack()
 
-        # Contraseña
         tk.Label(form_frame, text="Contraseña", font=fuente, bg="white").pack(pady=(pady_campo, 5))
         entry_contrasena = tk.Entry(form_frame, show="*", font=fuente, width=ancho_entry)
         entry_contrasena.pack()
 
-        # Rol
         tk.Label(form_frame, text="Rol", font=fuente, bg="white").pack(pady=(pady_campo, 5))
         rol_var = tk.StringVar(form_frame)
         rol_var.set("Seleccionar rol")
@@ -253,7 +418,6 @@ class AdminView(BaseView):
         menu_rol.config(font=fuente, width=ancho_entry)
         menu_rol.pack()
 
-        # Guardar usuario
         def guardar_usuario():
             nombre = entry_nombre.get().strip()
             apellido = entry_apellido.get().strip()
@@ -265,15 +429,12 @@ class AdminView(BaseView):
                 messagebox.showerror("Error", "Completa todos los campos correctamente.")
                 return
 
-            # Primero capturamos la huella y obtenemos su id
             fingerprint_id = self.mostrar_ventana_biometrica()
             if fingerprint_id is None or (isinstance(fingerprint_id, int) and fingerprint_id < 0):
                 messagebox.showerror("Error", "No se pudo obtener la huella. Registro cancelado.")
                 return
 
             try:
-                # Si el controlador acepta fingerprint_id se lo pasamos como kwarg.
-                # Si no, quitar el argumento y adaptar según la firma de AdminController.
                 self.admin_controller.create_user(
                     firstName=nombre,
                     lastName=apellido,
@@ -287,64 +448,54 @@ class AdminView(BaseView):
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo registrar el usuario:\n{e}")
 
-        # Botones
         tk.Button(
             form_frame,
             text="Guardar Usuario",
-            font=("Arial", 22, "bold"),
-            bg="#4CAF50",
+            font=("Segoe UI", 30, "bold"),
+            bg=ESTILOS["btn_add_bg"],
             fg="white",
             height=2,
-            width=20,
+            width=25,
             relief="flat",
             command=guardar_usuario
-        ).pack(pady=40)
+        ).pack(pady=50)
 
         tk.Button(
             form_frame,
             text="Volver",
-            font=("Arial", 18),
-            bg="#D32F2F",
+            font=("Segoe UI", 26),
+            bg=ESTILOS["btn_del_bg"],
             fg="white",
             height=2,
-            width=20,
+            width=25,
             relief="flat",
             command=self.volver_a_lista
-        ).pack(pady=10)
-                # Botones
+        ).pack(pady=20)
 
-
-        
-
-    def mostrar_ventana_biometrica(self) -> int:
-
-        # Creamos una ventana modal para mostrar instrucciones durante la captura
+    def mostrar_ventana_biometrica(self) -> int | None:
         ventana = tk.Toplevel(self)
         ventana.title("Captura de huella")
-        ventana.transient(self)
+        ventana.transient(self.winfo_toplevel())
         ventana.grab_set()
-        ventana.geometry("600x200")
+        ventana.geometry("800x300")
 
         texto_instruccion = tk.StringVar(ventana, value="Por favor, coloque su dedo en el lector biométrico")
-        label_instr = tk.Label(ventana, textvariable=texto_instruccion, font=("Arial", 18))
-        label_instr.pack(pady=20, padx=20)
+        label_instr = tk.Label(ventana, textvariable=texto_instruccion, font=("Segoe UI", 24))
+        label_instr.pack(pady=30, padx=30)
 
-        # Botón cancelar por si se desea abortar
         def cancelar():
             ventana.destroy()
 
-        btn_cancel = tk.Button(ventana, text="Cancelar", font=("Arial", 14), command=cancelar)
-        btn_cancel.pack(pady=10)
+        btn_cancel = tk.Button(ventana, text="Cancelar", font=("Segoe UI", 20), command=cancelar)
+        btn_cancel.pack(pady=20)
 
         ventana.update()
-
         fingerprintId = None
 
         while True:
             try:
                 texto_instruccion.set("Esperando huella...")
                 ventana.update()
-                # Llamada al controlador para iniciar captura (puede bloquear o lanzar excepción)
                 isAble = self.admin_controller.capture_fingerprint()
             except Exception as e:
                 texto_instruccion.set("Huella registrada con otro usuario o error. Use otra huella.")
@@ -363,20 +514,17 @@ class AdminView(BaseView):
                 time.sleep(1.0)
 
                 if not isAble:
-                    # Huella previamente registrada
                     messagebox.showinfo("Información", "Huella previamente registrada, utilice otra")
                     ventana.destroy()
                     return None
 
                 texto_instruccion.set("Coloque su dedo nuevamente para finalizar registro...")
                 ventana.update()
-                # match_and_store_fp debería devolver el id de la huella almacenada
                 fingerprintId = self.admin_controller.match_and_store_fp()
             except Exception as e:
                 texto_instruccion.set("Error al registrar huella, intente nuevamente")
                 ventana.update()
                 time.sleep(1.5)
-                # Reintentar: continuar el while
                 continue
 
             break
@@ -386,66 +534,30 @@ class AdminView(BaseView):
         print(f'huella registrada #{fingerprintId}')
         return fingerprintId
 
-    def agregar_usuario(self):
-        self.mostrar_ventana_emergente()
-    
-    def eliminar_usuario(self):
-        selected_index = self.listbox.curselection()
-        if selected_index:
-            index = selected_index[0]  # sin cabecera ni separador, índice corresponde directamente a usuarios
-            user_id = self.usuarios[index]["id"]
-            print(self.usuarios[index])
-            answer = messagebox.askyesno("PRECAUCIÓN", f"Va a eliminar al usuario {self.usuarios[index]['nombre']} ¿está seguro?")
-            if not answer:
-                return
-            else:
-                second_answer = messagebox.askyesno("¿ESTÁS SEGURO?", "El eliminado de un usuario es una acción sin retorno, ¿está seguro de continuar?")
-                if not second_answer:
-                    return
-            self.admin_controller.delete_user_logically(user_id)
-            self.usuarios = self.admin_controller.get_all_users()
-            self.actualizar_lista()
-            self.validar_estado_botones()
-
-
-    def editar_usuario(self):
-        selected_index = self.listbox.curselection()
-        if selected_index:
-            index = selected_index[0]
-            nombre_actual = self.usuarios[index]["nombre"]
-            rol_actual = self.usuarios[index]["rol"]
-            username_actual = self.usuarios[index]["username"]
-            self.show_edit_dialog(index, nombre_actual, rol_actual, username_actual)
-
-
     def show_edit_dialog(self, index, nombre_actual, rol_actual, username_actual):
-        # Limpiamos el contenido actual
         for widget in self.frame_content.winfo_children():
             widget.destroy()
 
-        tk.Label(self.frame_content, text="Editar Usuario", font=("Arial", 24, "bold"), bg="#fcfcfc").pack(pady=10)
+        tk.Label(self.frame_content, text="Editar Usuario", font=ESTILOS["font_title"], bg=ESTILOS["bg_main"]).pack(pady=20)
 
-        form_frame = tk.Frame(self.frame_content, bg="#fcfcfc")
-        form_frame.pack(pady=20)
+        form_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
+        form_frame.pack(pady=30)
 
-        # Separar nombre en nombre y apellido (si quieres mantener un único campo puedes adaptarlo)
         partes = nombre_actual.split(" ", 1)
         first_name_default = partes[0]
         last_name_default = partes[1] if len(partes) > 1 else ""
 
-        # Campos de edición: Nombre (first), Apellido (last), Rol, Usuario, Nueva Clave
-        tk.Label(form_frame, text="Nombre:", font=("Arial", 16), bg="#fcfcfc").grid(row=0, column=0, sticky="e", padx=10, pady=5)
-        entry_first_name = tk.Entry(form_frame, font=("Arial", 16))
+        tk.Label(form_frame, text="Nombre:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=0, column=0, sticky="e", padx=20, pady=10)
+        entry_first_name = tk.Entry(form_frame, font=ESTILOS["font_form"])
         entry_first_name.insert(0, first_name_default)
-        entry_first_name.grid(row=0, column=1, padx=10, pady=5)
+        entry_first_name.grid(row=0, column=1, padx=20, pady=10)
 
-        tk.Label(form_frame, text="Apellido:", font=("Arial", 16), bg="#fcfcfc").grid(row=1, column=0, sticky="e", padx=10, pady=5)
-        entry_last_name = tk.Entry(form_frame, font=("Arial", 16))
+        tk.Label(form_frame, text="Apellido:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=1, column=0, sticky="e", padx=20, pady=10)
+        entry_last_name = tk.Entry(form_frame, font=ESTILOS["font_form"])
         entry_last_name.insert(0, last_name_default)
-        entry_last_name.grid(row=1, column=1, padx=10, pady=5)
+        entry_last_name.grid(row=1, column=1, padx=20, pady=10)
 
-                # Rol
-        tk.Label(form_frame, text="Rol", font=("Arial", 16), bg="white").grid(row=2, column=0, sticky='e', padx=10, pady=5)
+        tk.Label(form_frame, text="Rol", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=2, column=0, sticky='e', padx=20, pady=10)
         rol_var = tk.StringVar(form_frame)
         rol_var.set("Seleccionar rol")
 
@@ -456,21 +568,20 @@ class AdminView(BaseView):
         }
 
         menu_rol = tk.OptionMenu(form_frame, rol_var, *opciones_rol)
-        menu_rol.config(font=("Arial", 16))
-        menu_rol.grid(row=2, column=1, padx=10, pady=5)
+        menu_rol.config(font=ESTILOS["font_form"])
+        menu_rol.grid(row=2, column=1, padx=20, pady=10)
 
-        tk.Label(form_frame, text="Usuario:", font=("Arial", 16), bg="#fcfcfc").grid(row=3, column=0, sticky="e", padx=10, pady=5)
-        entry_username = tk.Entry(form_frame, font=("Arial", 16))
+        tk.Label(form_frame, text="Usuario:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=3, column=0, sticky="e", padx=20, pady=10)
+        entry_username = tk.Entry(form_frame, font=ESTILOS["font_form"])
         entry_username.insert(0, username_actual)
-        entry_username.grid(row=3, column=1, padx=10, pady=5)
+        entry_username.grid(row=3, column=1, padx=20, pady=10)
 
-        tk.Label(form_frame, text="Nueva Clave (opcional):", font=("Arial", 16), bg="#fcfcfc").grid(row=4, column=0, sticky="e", padx=10, pady=5)
-        entry_password = tk.Entry(form_frame, font=("Arial", 16), show="*")
-        entry_password.grid(row=4, column=1, padx=10, pady=5)
+        tk.Label(form_frame, text="Nueva Clave (opcional):", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=4, column=0, sticky="e", padx=20, pady=10)
+        entry_password = tk.Entry(form_frame, font=ESTILOS["font_form"], show="*")
+        entry_password.grid(row=4, column=1, padx=20, pady=10)
 
-        # Botones de acción
-        button_frame = tk.Frame(self.frame_content, bg="#fcfcfc")
-        button_frame.pack(pady=20)
+        button_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
+        button_frame.pack(pady=30)
 
         def guardar():
             first_name = entry_first_name.get().strip()
@@ -480,139 +591,48 @@ class AdminView(BaseView):
             new_password = entry_password.get().strip()
 
             if not first_name or not new_rol or not new_username:
-                tk.messagebox.showwarning("Campos vacíos", "Nombre, rol y usuario son obligatorios.")
+                messagebox.showwarning("Campos vacíos", "Nombre, rol y usuario son obligatorios.")
                 return
 
             user_id = self.usuarios[index]["id"]
+            self.admin_controller.update_user(user_id, first_name, last_name, new_rol, new_username, new_password if new_password else None)
 
-            # Llamamos a AdminController.update_user con la firma correcta:
-            # update_user(user_id, first_name, last_name, role, username=None, password=None)
-            # Convertimos rol si el usuario escribe "Administrador"/"Operario" a los enums si quieres:
-            rol_param = new_rol
-
-            # Llamada final (password en texto plano; AdminController se encargará de hashearlo)
-            self.admin_controller.update_user(user_id, first_name, last_name, rol_param, new_username, new_password if new_password else None)
-
-            # Refrescar lista y volver
             self.usuarios = self.admin_controller.get_all_users()
             self.volver_a_lista()
 
-        # Botón Guardar
         BotonRedondeado(
             parent=button_frame,
-            width=250,
-            height=70,
-            radio=30,
+            width=300,
+            height=90,
+            radio=40,
             texto="Guardar Cambios",
-            color_fondo="#4CAF50",
-            color_hover="#388E3C",
+            color_fondo=ESTILOS["btn_add_bg"],
+            color_hover=ESTILOS["btn_add_hover"],
             color_texto="white",
-            font=("Times", 24, "bold"),
+            font=("Segoe UI", 32, "bold"),
             comando=guardar
-        ).grid(row=0, column=0, padx=10)
+        ).grid(row=0, column=0, padx=20)
 
-        # Botón Volver
         BotonRedondeado(
             parent=button_frame,
-            width=250,
-            height=70,
-            radio=30,
+            width=300,
+            height=90,
+            radio=40,
             texto="Volver",
             color_fondo="#9E9E9E",
             color_hover="#757575",
             color_texto="white",
-            font=("Times", 24, "bold"),
+            font=("Segoe UI", 32, "bold"),
             comando=self.volver_a_lista
-        ).grid(row=0, column=1, padx=10)
+        ).grid(row=0, column=1, padx=20)
 
 
-    def volver_a_lista(self):
-        """Restaura la vista principal (lista de usuarios) sin reiniciar toda la clase."""
-        # Limpiar el contenido actual
-        for widget in self.frame_content.winfo_children():
-            widget.destroy()
-
-        # Volver a crear la barra de botones + lista (misma estructura que en __init__)
-        button_frame = tk.Frame(self.frame_content, bg='#fcfcfc')
-        button_frame.pack(pady=20)
-
-        self.btn_agregar = BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=80,
-            radio=40,
-            texto="Agregar",
-            color_fondo="#4CAF50",
-            color_hover="#388E3C",
-            color_texto="white",
-            font=("Times", 30, "bold"),
-            comando=self.agregar_usuario
-        )
-        self.btn_agregar.grid(row=0, column=0, padx=10)
-
-        self.btn_eliminar = BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=80,
-            radio=40,
-            texto="Eliminar",
-            color_fondo="#F44336",
-            color_hover="#D32F2F",
-            color_texto="white",
-            font=("Times", 30, "bold"),
-            comando=self.eliminar_usuario
-        )
-        self.btn_eliminar.grid(row=0, column=1, padx=10)
-
-        self.btn_editar = BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=80,
-            radio=40,
-            texto="Editar",
-            color_fondo="#FF9800",
-            color_hover="#F57C00",
-            color_texto="white",
-            font=("Times", 30, "bold"),
-            comando=self.editar_usuario
-        )
-        self.btn_editar.grid(row=0, column=2, padx=10)
-
-        # Volver a crear la lista de usuarios
-        list_frame = tk.Frame(self.frame_content, bg='#fcfcfc')
-        list_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=10)
-
-        self.listbox = tk.Listbox(
-            list_frame,
-            font=("DejaVu Sans Mono", 26),
-            selectbackground="#4CAF50",
-            selectforeground="white",
-            activestyle="none",
-            bd=0,
-            highlightthickness=0
-        )
-        self.listbox.pack(anchor="center", pady=10)
-        scrollbar_y = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.listbox.yview)
-        scrollbar_y.pack(side=tk.RIGHT, fill=tk.Y)
-        self.listbox.config(yscrollcommand=scrollbar_y.set)
-
-        # Recargar usuarios
-        self.usuarios = self.admin_controller.get_all_users()
-        self.actualizar_lista()
-        self.validar_estado_botones()
-
-        self.listbox.bind("<Button-1>", self.toggle_seleccion)
-
-    def on_show(self):
-        for widget in self.header_frame.winfo_children():
-            if isinstance(widget, tk.Label):
-                widget.config(text=SessionState.get_user().getFullName())
-        self.volver_a_lista()
-        
+# ==============================================================================
+# Botón redondeado personalizado
 class BotonRedondeado(tk.Canvas):
     def __init__(self, parent, width=200, height=60, radio=25,
                  texto="Botón", color_fondo="#3A86FF", color_hover="#2E75D9",
-                 color_texto="white", font=("Times", 24, "bold"), comando=None):
+                 color_texto="white", font=("Segoe UI", 24, "bold"), comando=None):
         super().__init__(parent, width=width, height=height, bg=parent.cget("bg"),
                          highlightthickness=0, bd=0)
         self.radio = radio
@@ -620,11 +640,9 @@ class BotonRedondeado(tk.Canvas):
         self.color_hover = color_hover
         self.comando = comando
 
-        # Dibuja el botón redondeado
         self.rect = self.crear_rectangulo_redondeado(0, 0, width, height, radio, fill=color_fondo)
-        self.texto = self.create_text(width / 2, height / 2, text=texto, fill=color_texto, font=font)
+        self.texto = self.create_text(width // 2, height // 2, text=texto, fill=color_texto, font=font)
 
-        # Efectos
         self.bind("<Enter>", self.on_enter)
         self.bind("<Leave>", self.on_leave)
         self.bind("<Button-1>", self.on_click)
@@ -632,27 +650,19 @@ class BotonRedondeado(tk.Canvas):
     def crear_rectangulo_redondeado(self, x1, y1, x2, y2, r=25, **kwargs):
         points = (
             x1 + r, y1,
-            x1 + r, y1,
-            x2 - r, y1,
             x2 - r, y1,
             x2, y1,
             x2, y1 + r,
-            x2, y1 + r,
-            x2, y2 - r,
             x2, y2 - r,
             x2, y2,
             x2 - r, y2,
-            x2 - r, y2,
-            x1 + r, y2,
             x1 + r, y2,
             x1, y2,
             x1, y2 - r,
-            x1, y2 - r,
-            x1, y1 + r,
             x1, y1 + r,
             x1, y1
         )
-        return self.create_polygon(points, smooth=True, outline="", **kwargs)
+        return self.create_polygon(points, smooth=True, **kwargs)
 
     def on_enter(self, event):
         self.itemconfig(self.rect, fill=self.color_hover)
