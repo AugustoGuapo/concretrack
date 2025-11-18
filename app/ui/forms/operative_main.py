@@ -77,8 +77,18 @@ class SampleListFrame(BaseView):
         canvas = tk.Canvas(list_frame, bg=ESTILOS["list_bg"], highlightthickness=0)
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
 
-        scrollbar = tk.Scrollbar(list_frame, orient=tk.VERTICAL, command=canvas.yview)
+                # Scrollbar más ancho y visible para pantalla táctil
+        scrollbar = tk.Scrollbar(
+            list_frame,
+            orient=tk.VERTICAL,
+            command=canvas.yview,
+            width=50,  # 👈 Ancho aumentado
+            bg="#E0E0E0",  # Fondo claro
+            activebackground="#CCCCCC",  # Al hacer hover
+            troughcolor="#F5F5F5"  # Color del fondo del track
+        )
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
         canvas.config(yscrollcommand=scrollbar.set)
 
         self.canvas_frame = tk.Frame(canvas, bg=ESTILOS["list_bg"])
