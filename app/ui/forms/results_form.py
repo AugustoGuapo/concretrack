@@ -6,9 +6,10 @@ from app.ui.controllers.results_controller import ResultsController
 from app.state.session_state import SessionState
 from app.state.sample_state import SampleState
 from app.ui.forms.base_view import BaseView
+from PIL import Image, ImageTk
+from PIL.Image import Resampling
 
-# Reutilizar estilos de AdminView (si no están definidos aquí, puedes copiarlos)
-# Si no quieres depender de ESTILOS, define un diccionario local:
+# Estilos coherentes con AdminView
 ESTILOS = {
     "bg_main": "#F8F9FA",
     "bg_header": "#E3F2FD",
@@ -32,7 +33,8 @@ class ResultsForm(BaseView):
         self.days = 155
         self.view_controller = view_controller
         self.username = SessionState.get_user().getFullName() if SessionState.get_user() else "Invitado"
-        self.body = None  # 👈 Inicializa aquí
+        self.body = None
+        self.selected_type = None  # Guarda el tipo seleccionado
 
         self.config(bg=ESTILOS["bg_main"])
         self._crear_header()
@@ -44,7 +46,6 @@ class ResultsForm(BaseView):
         header.pack(fill="x", side="top")
         header.pack_propagate(False)
 
-        # Botón de retroceso
         btn_back = tk.Button(
             header,
             text="←",
@@ -58,7 +59,6 @@ class ResultsForm(BaseView):
         )
         btn_back.pack(side="left", padx=20)
 
-        # Usuario
         lbl_user = tk.Label(
             header,
             text=f"Usuario: {self.username}",
@@ -68,15 +68,14 @@ class ResultsForm(BaseView):
         )
         lbl_user.pack(side="left", padx=20)
 
-        # Separador
         separator = tk.Frame(self, height=2, bg="#DDDDDD")
         separator.pack(fill="x", pady=(0, 10))
 
     def _crear_body(self):
-        self.body = tk.Frame(self, bg=ESTILOS["bg_main"])  # 👈 self.body
+        self.body = tk.Frame(self, bg=ESTILOS["bg_main"])
         self.body.pack(expand=True, fill="both", padx=40, pady=30)
 
-        # Guardamos el label descriptivo para actualizarlo después
+        # Texto descriptivo
         self.lbl_family = tk.Label(
             self.body,
             text=f"Registrando resultados para familia: {self.family} a los {self.days} días",
@@ -86,44 +85,160 @@ class ResultsForm(BaseView):
         )
         self.lbl_family.pack(pady=(10, 30))
 
-        frame_entry_boton = tk.Frame(self.body, bg=ESTILOS["bg_main"])
-        frame_entry_boton.pack(fill="x", pady=(0, 20))
+        # Frame contenedor principal (teclado + tipos)
+        main_frame = tk.Frame(self.body, bg=ESTILOS["bg_main"])
+        main_frame.pack(fill="x", pady=(0, 20))
 
+        # Frame del teclado numérico (izquierda)
+        keypad_frame = tk.Frame(main_frame, bg=ESTILOS["bg_main"])
+        keypad_frame.pack(side="left", padx=(0, 20))
+
+        # Campo de entrada (encima del teclado) → ahora con grid
         self.entry_valor = tk.Entry(
-            frame_entry_boton,
+            keypad_frame,
             font=("Segoe UI", 30),
-            width=30,
-            bg="white",
-            fg="#333333",
+            width=20,
+            bg="#000000",
+            fg="#FFFFFF",
             relief="flat",
             highlightthickness=2,
-            highlightbackground="#CCCCCC",
+            highlightbackground="#444444",
             highlightcolor="#4CAF50",
             bd=2,
-            insertwidth=4
+            insertbackground="#FFFFFF",
+            state="readonly"
         )
-        self.entry_valor.pack(side="left", expand=True, fill="x", padx=(0, 20), ipady=15)
+        self.entry_valor.grid(row=0, column=0, columnspan=3, padx=5, pady=(0, 10), ipady=15, sticky="ew")
 
+        # Configurar columna para que se expanda
+        keypad_frame.grid_columnconfigure(0, weight=1)
+        keypad_frame.grid_columnconfigure(1, weight=1)
+        keypad_frame.grid_columnconfigure(2, weight=1)
+
+        # Teclado numérico con grid
+        buttons = [
+            ['7', '8', '9'],
+            ['4', '5', '6'],
+            ['1', '2', '3'],
+            ['.', '0', '←']
+        ]
+
+        for i, row in enumerate(buttons):
+            for j, text in enumerate(row):
+                btn = tk.Button(
+                    keypad_frame,
+                    text=text,
+                    font=("Segoe UI", 32, "bold"),
+                    bg="#333333",
+                    fg="#FFFFFF",
+                    width=4,
+                    height=2,
+                    relief="raised",
+                    bd=2,
+                    command=lambda t=text: self._add_to_entry(t)
+                )
+                btn.grid(row=i+1, column=j, padx=5, pady=5, sticky="nsew")
+
+        # Frame de tipos de fractura (derecha)
+        types_frame = tk.Frame(main_frame, bg=ESTILOS["bg_main"])
+        types_frame.pack(side="right", padx=(20, 0))
+
+        # Título de tipos
+        tk.Label(
+            types_frame,
+            text="Tipo de Fractura:",
+            font=("Segoe UI", 24, "bold"),
+            bg=ESTILOS["bg_main"],
+            fg="#333333"
+        ).pack(pady=(0, 10))
+
+        # Botones de tipos (solo uno seleccionable)
+        self.type_buttons = []
+        tipos = ["Tipo 1", "Tipo 2", "Tipo 3", "Tipo 4", "Tipo 5", "Tipo 6"]
+        
+                # Cargar imágenes
+        self.type_images = []
+        for i in range(1, 7):
+            try:
+                img_path = f"images/Tipo{i}.png"
+                img = Image.open(img_path)
+                # Redimensionar con BICUBIC (compatible con todas las versiones de Pillow)
+                img = img.resize((60, 60), Resampling.LANCZOS)
+                photo = ImageTk.PhotoImage(img)
+                self.type_images.append(photo)
+            except Exception as e:
+                print(f"No se pudo cargar {img_path}: {e}")
+                # Placeholder blanco
+                img = Image.new("RGB", (60, 60), "white")
+                photo = ImageTk.PhotoImage(img)
+                self.type_images.append(photo)
+
+        # Botones de tipos (solo uno seleccionable) con imágenes
+        for i, tipo in enumerate(tipos):
+            btn = tk.Button(
+                types_frame,
+                text=tipo,
+                image=self.type_images[i],  # 👈 Imagen
+                compound="top",           # Texto arriba de la imagen
+                font=("Segoe UI", 20, "bold"),
+                bg="#E0E0E0",
+                fg="#000000",
+                width=150,               # Ancho mayor para imagen + texto
+                height=100,              # Alto mayor
+                relief="raised",
+                bd=2,
+                command=lambda t=tipo: self._select_type(t)
+            )
+            btn.pack(pady=5, fill="x")
+            self.type_buttons.append(btn)
+
+        # Botón Guardar (centrado debajo)
         btn_guardar = BotonRedondeado(
-            parent=frame_entry_boton,
-            width=250,
+            parent=self.body,
+            width=400,
             height=80,
             radio=40,
             texto="GUARDAR",
             color_fondo=ESTILOS["btn_add_bg"],
             color_hover=ESTILOS["btn_add_hover"],
             color_texto="white",
-            font=("Segoe UI", 28, "bold"),
+            font=("Segoe UI", 32, "bold"),
             comando=self._guardar
         )
-        btn_guardar.pack(side="right")
-
-        vcmd = (self.register(self._validar_input), "%P")
-        self.entry_valor.config(validate="key", validatecommand=vcmd)
+        btn_guardar.pack(pady=30)
 
     def _crear_footer(self):
         footer = tk.Frame(self, bg=ESTILOS["bg_main"], height=40)
         footer.pack(fill="x", side="bottom")
+
+    def _add_to_entry(self, char):
+        """Añade o borra caracteres en el Entry."""
+        current = self.entry_valor.get()
+        if char == '←':
+            new_text = current[:-1]
+        elif char == '.':
+            if '.' not in current:
+                new_text = current + '.'
+            else:
+                return
+        else:
+            new_text = current + char
+
+        if new_text == "" or self._validar_input(new_text):
+            self.entry_valor.config(state="normal")
+            self.entry_valor.delete(0, tk.END)
+            self.entry_valor.insert(0, new_text)
+            self.entry_valor.config(state="readonly")
+
+    def _select_type(self, tipo):
+        """Selecciona un tipo de fractura (solo uno)."""
+        self.selected_type = tipo
+        # Resaltar el botón seleccionado
+        for btn in self.type_buttons:
+            if btn.cget("text") == tipo:
+                btn.config(bg="#4CAF50", fg="white")
+            else:
+                btn.config(bg="#E0E0E0", fg="#000000")
 
     def _validar_input(self, texto_nuevo):
         if texto_nuevo == "":
@@ -138,18 +253,23 @@ class ResultsForm(BaseView):
         valor_str = self.entry_valor.get().strip()
         if not valor_str:
             messagebox.showwarning("Campo vacío", "Ingresa un valor numérico.")
-            self.entry_valor.config(bg="#f8d7da")  # Rojo claro
+            self.entry_valor.config(bg="#f8d7da")
+            return
+
+        if not self.selected_type:
+            messagebox.showwarning("Tipo no seleccionado", "Por favor, selecciona un tipo de fractura.")
             return
 
         try:
             valor = float(valor_str.replace(",", "."))
-            print(f"Valor guardado: {valor}")  # Reemplaza con tu lógica real
+            print(f"Valor guardado: {valor}, Tipo: {self.selected_type}")
             self.resultController.save_results(
                 user_id=SessionState.get_user().id,
                 member_id=self.member_id,
-                results=valor
+                results=valor,
+                #fracture_type=self.selected_type
             )
-            self.entry_valor.config(bg="#d4edda")  # Verde claro
+            self.entry_valor.config(bg="#d4edda")
             messagebox.showinfo("Éxito", "Resultado guardado correctamente")
             self._volver()
         except Exception as e:
@@ -165,19 +285,23 @@ class ResultsForm(BaseView):
         self._reload()
 
     def _clear(self):
+        self.entry_valor.config(state="normal", bg="#000000")
         self.entry_valor.delete(0, tk.END)
-        self.entry_valor.config(bg="white")
+        self.entry_valor.config(state="readonly", bg="#000000")
+        # Deseleccionar tipo
+        self.selected_type = None
+        for btn in self.type_buttons:
+            btn.config(bg="#E0E0E0", fg="#000000")
 
     def _reload(self):
         sample = SampleState.get_sample()
         self.family = sample.family_id
         self.member_id = sample.id
-        # ✅ Actualiza solo el texto, no destruye el frame
         if hasattr(self, 'lbl_family') and self.lbl_family:
             self.lbl_family.config(text=f"Registrando resultados para familia: {self.family} a los {self.days} días")
 
 # ==============================================================================
-# Botón redondeado personalizado (reutilizable)
+# Botón redondeado personalizado
 class BotonRedondeado(tk.Canvas):
     def __init__(self, parent, width=200, height=60, radio=25,
                  texto="Botón", color_fondo="#3A86FF", color_hover="#2E75D9",
