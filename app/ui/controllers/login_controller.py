@@ -10,7 +10,10 @@ class LoginController:
         self.auth_service = AuthenticationService(
             UserRepositoryImpl(), BcryptHasherImpl()
         )
-        self.fingerprintSensor = FingerprintSensor()
+        try:
+            self.fingerprintSensor = FingerprintSensor()
+        except Exception:
+            self.fingerprintSensor = None  # Desactivado temporalmente para desarrollo visual
 
     def login(self, username: str, password: str):
         user = self.auth_service.authenticateUserCredentials(
@@ -18,12 +21,14 @@ class LoginController:
         )
 
         if user:
-            SessionState.set_user(user)  # <- Guardar el usuario en estado global
+            SessionState.set_user(user)
             print(f"User {user.username} logged in successfully.")
             return True
         return False
     
     def fingerPrintLogin(self):
+        if self.fingerprintSensor is None:
+            return False  # Sensor no disponible → login por huella no posible
         fingerprintId = self.fingerprintSensor.check_fingerprint()
         if fingerprintId == -1:
             return False

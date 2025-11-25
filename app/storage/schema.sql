@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS projects (
 
 CREATE TABLE IF NOT EXISTS families (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sample_place TEXT NOT NULL,
     type TEXT NOT NULL,
     date_of_entry DATE NOT NULL,
     radius FLOAT,
@@ -44,6 +45,8 @@ CREATE TABLE IF NOT EXISTS members (
     result INTEGER,
     operative INTEGER,        
     is_reported INTEGER,
+    fracture_days INTEGER,
+    fracture_type TEXT,
 
     FOREIGN KEY (family_id) REFERENCES families(id),
     FOREIGN KEY (operative) REFERENCES users(id)

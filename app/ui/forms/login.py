@@ -6,6 +6,9 @@ from tkinter import messagebox
 from app.state.session_state import SessionState
 from app.models.user_role import UserRole
 from app.ui.forms.base_view import BaseView
+import os
+import subprocess
+from tkinter import messagebox
 
 
 class App(BaseView):
@@ -67,6 +70,22 @@ class App(BaseView):
 
         # Posición en la esquina inferior derecha
         self.boton_alternar.place(relx=1.0, rely=1.0, anchor='se', x=-30, y=-30)
+
+        # Botón de Finalizar (apagar dispositivo) - dentro de frame_logo
+        self.boton_finalizar = BotonRedondeado(
+            parent=frame_logo,  # <-- ¡Aquí cambiamos el padre!
+            width=280,          # Ajustado para caber con margen
+            height=60,
+            radio=30,
+            texto="Finalizar",
+            color_fondo="#FF3B30",        # Rojo para acción crítica
+            color_hover="#D6302A",
+            color_texto="white",
+            font=("Times", 22, "bold"),
+            comando=self.confirmar_apagado
+        )
+        # Posicionar en esquina inferior izquierda DENTRO de frame_logo
+        self.boton_finalizar.place(relx=0.0, rely=1.0, anchor='sw', x=10, y=-10)
 
         # Estado actual: biometría o credenciales
         self.modo_actual = "biometrico"
@@ -230,6 +249,24 @@ class App(BaseView):
 
     def verificar(self):
         print("Verificando...")
+    
+    def confirmar_apagado(self):
+        respuesta = messagebox.askyesno(
+            "Confirmar apagado",
+            "¿Está seguro que desea apagar el dispositivo?\n\n"
+            "Toda la actividad se detendrá y el sistema se cerrará."
+        )
+        if respuesta:
+            self.apagar_dispositivo()
+
+    def apagar_dispositivo(self):
+        try:
+            # Comando para apagar en Linux (Raspberry Pi)
+            subprocess.run(["sudo", "shutdown", "-h", "now"], check=True)
+        except subprocess.CalledProcessError as e:
+            messagebox.showerror("Error", f"No se pudo apagar el dispositivo:\n{e}")
+        except FileNotFoundError:
+            messagebox.showerror("Error", "El comando 'shutdown' no está disponible.")
 
 
 class BotonRedondeado(tk.Canvas):
