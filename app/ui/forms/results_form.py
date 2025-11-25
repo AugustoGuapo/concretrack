@@ -299,7 +299,7 @@ class ResultsForm(BaseView):
                 user_id=SessionState.get_user().id,
                 member_id=self.member_id,
                 results=valor,
-                #fracture_type=self.selected_type
+                fracture_type=self.selected_type
             )
             self.entry_valor.config(bg="#d4edda")
             messagebox.showinfo("Éxito", "Resultado guardado correctamente")

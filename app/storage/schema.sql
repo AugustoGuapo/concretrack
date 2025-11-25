@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS members (
     operative INTEGER,        
     is_reported INTEGER,
     fracture_days INTEGER,
+    fracture_type TEXT,
 
     FOREIGN KEY (family_id) REFERENCES families(id),
     FOREIGN KEY (operative) REFERENCES users(id)
