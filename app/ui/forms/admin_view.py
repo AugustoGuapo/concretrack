@@ -8,7 +8,7 @@ from app.models.user_role import UserRole
 from app.state.session_state import SessionState
 import time
 
-# ----------------- Estilos globales para coherencia visual -----------------
+# ----------------- Estilos globales -----------------
 ESTILOS = {
     "bg_main": "#F8F9FA",
     "bg_header": "#E3F2FD",
@@ -39,6 +39,7 @@ class AdminView(BaseView):
             "admin": "Administrador",
             "operative": "Operario"
         }
+        self.row_widgets = []  # Inicializado aquí
 
         self.config(bg=ESTILOS["bg_main"])
         self.create_header()
@@ -131,74 +132,40 @@ class AdminView(BaseView):
         self.btn_editar.grid(row=0, column=2, padx=25)
 
     def create_user_list(self):
-        list_container = tk.Frame(self.frame_content, bg="lightgray", padx=2, pady=2)
-        list_container.pack(fill=tk.BOTH, expand=True, padx=40, pady=(10, 30))
+        # Frame contenedor para la lista
+        list_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
+        list_frame.pack(fill="x", padx=40, pady=(20, 30))
 
-        list_frame = tk.Frame(list_container, bg=ESTILOS["list_bg"])
-        list_frame.pack(fill=tk.BOTH, expand=True)
-
-        header_frame = tk.Frame(list_frame, bg=ESTILOS["list_bg"])
-        header_frame.pack(fill=tk.X, padx=20, pady=(10, 5))
-
-        tk.Label(
-            header_frame,
-            text="Nombre",
-            font=("Segoe UI", 26, "bold"),
-            bg=ESTILOS["list_bg"],
-            fg="#555555",
-            anchor="w"
-        ).grid(row=0, column=0, sticky="w")
-
-        tk.Label(
-            header_frame,
-            text="Rol",
-            font=("Segoe UI", 26, "bold"),
-            bg=ESTILOS["list_bg"],
-            fg="#555555",
-            anchor="center"
-        ).grid(row=0, column=1, sticky="", padx=(30, 0))
-
-        tk.Label(
-            header_frame,
-            text="Usuario",
-            font=("Segoe UI", 26, "bold"),
-            bg=ESTILOS["list_bg"],
-            fg="#555555",
-            anchor="e"
-        ).grid(row=0, column=2, sticky="e", padx=(30, 0))
-
+        # Línea horizontal debajo de los botones
         separator = tk.Frame(list_frame, bg="#DDDDDD", height=2)
-        separator.pack(fill=tk.X, padx=20, pady=(0, 5))
+        separator.pack(fill="x", pady=(0, 10))
 
-        canvas = tk.Canvas(list_frame, bg=ESTILOS["list_bg"], highlightthickness=0)
-        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=20, pady=(0, 20))
+        # Contenedor de filas
+        self.rows_container = tk.Frame(list_frame, bg=ESTILOS["bg_main"])
+        self.rows_container.pack(fill="x")
 
-        scrollbar = tk.Scrollbar(
-            list_frame,
-            orient=tk.VERTICAL,
-            command=canvas.yview,
-            width=50,  # 👈 Ancho aumentado
-            bg="#E0E0E0",  # Fondo claro
-            activebackground="#CCCCCC",  # Al hacer hover
-            troughcolor="#F5F5F5"  # Color del fondo del track
-        )
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        canvas.config(yscrollcommand=scrollbar.set)
-
-        self.canvas_frame = tk.Frame(canvas, bg=ESTILOS["list_bg"])
-        canvas.create_window((0, 0), window=self.canvas_frame, anchor="nw")
-        self.canvas_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        self.row_widgets = []
-
+        # Cargar datos
         self.usuarios = self.admin_controller.get_all_users()
         self.actualizar_lista()
         self.validar_estado_botones()
 
     def actualizar_lista(self):
-        for widget in self.canvas_frame.winfo_children():
+        # Limpiar filas anteriores
+        for widget in self.rows_container.winfo_children():
             widget.destroy()
         self.row_widgets.clear()
+
+        # Verificar que haya usuarios
+        if not self.usuarios:
+            # Mostrar mensaje si no hay usuarios
+            tk.Label(
+                self.rows_container,
+                text="No hay usuarios registrados.",
+                font=("Segoe UI", 24),
+                bg=ESTILOS["bg_main"],
+                fg="#999999"
+            ).pack(pady=50)
+            return
 
         nombres = [u.get('nombre', '') for u in self.usuarios]
         roles = [self.role_dict.get(u.get('rol', ''), "Desconocido") for u in self.usuarios]
@@ -213,44 +180,49 @@ class AdminView(BaseView):
             rol = rol_texto
             username = usuario.get('username', '')
 
-            row_frame = tk.Frame(self.canvas_frame, bg=ESTILOS["list_bg"], height=80)
-            row_frame.pack(fill=tk.X, padx=10, pady=5)
+            # Frame de la fila con altura fija
+            row_frame = tk.Frame(
+                self.rows_container,
+                bg=ESTILOS["bg_main"],
+                height=80  # Altura fija
+            )
+            row_frame.pack(fill="x", pady=5)
             row_frame.pack_propagate(False)
 
-            row_frame.grid_columnconfigure(0, weight=1)
-            row_frame.grid_columnconfigure(1, weight=1)
-            row_frame.grid_columnconfigure(2, weight=1)
-
+            # Nombre: izquierda
             lbl_nombre = tk.Label(
                 row_frame,
-                text=nombre,
+                text=nombre.ljust(w1),
                 font=ESTILOS["font_list"],
-                bg=ESTILOS["list_bg"],
+                bg=ESTILOS["bg_main"],
                 fg=ESTILOS["list_fg"],
                 anchor="w"
             )
-            lbl_nombre.grid(row=0, column=0, sticky="w", padx=(0, 10))
+            lbl_nombre.place(x=0, rely=0.5, anchor="w")
 
+            # Rol: centro
             lbl_rol = tk.Label(
                 row_frame,
-                text=rol,
+                text=rol.ljust(w2),
                 font=ESTILOS["font_list"],
-                bg=ESTILOS["list_bg"],
+                bg=ESTILOS["bg_main"],
                 fg=ESTILOS["list_fg"],
                 anchor="center"
             )
-            lbl_rol.grid(row=0, column=1, sticky="", padx=10)
+            lbl_rol.place(relx=0.5, rely=0.5, anchor="center")
 
+            # Usuario: derecha
             lbl_username = tk.Label(
                 row_frame,
-                text=username,
+                text=username.ljust(w3),
                 font=ESTILOS["font_list"],
-                bg=ESTILOS["list_bg"],
+                bg=ESTILOS["bg_main"],
                 fg=ESTILOS["list_fg"],
                 anchor="e"
             )
-            lbl_username.grid(row=0, column=2, sticky="e", padx=(10, 0))
+            lbl_username.place(relx=1.0, rely=0.5, anchor="e")
 
+            # Guardar datos de la fila
             row_data = {
                 "frame": row_frame,
                 "nombre": lbl_nombre,
@@ -260,29 +232,27 @@ class AdminView(BaseView):
             }
             self.row_widgets.append(row_data)
 
+            # Vincular clic al frame completo
             def make_handler(idx):
                 return lambda e: self.select_row(idx)
             row_frame.bind("<Button-1>", make_handler(i))
-            lbl_nombre.bind("<Button-1>", make_handler(i))
-            lbl_rol.bind("<Button-1>", make_handler(i))
-            lbl_username.bind("<Button-1>", make_handler(i))
 
     def select_row(self, index):
         if hasattr(self, 'selected_index') and self.selected_index == index:
             for data in self.row_widgets:
-                data["frame"].config(bg=ESTILOS["list_bg"])
-                data["nombre"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
-                data["rol"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
-                data["username"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+                data["frame"].config(bg=ESTILOS["bg_main"])
+                data["nombre"].config(bg=ESTILOS["bg_main"], fg=ESTILOS["list_fg"])
+                data["rol"].config(bg=ESTILOS["bg_main"], fg=ESTILOS["list_fg"])
+                data["username"].config(bg=ESTILOS["bg_main"], fg=ESTILOS["list_fg"])
             delattr(self, 'selected_index')
             self.btn_editar.config(state=tk.DISABLED)
             self.btn_eliminar.config(state=tk.DISABLED)
         else:
             for data in self.row_widgets:
-                data["frame"].config(bg=ESTILOS["list_bg"])
-                data["nombre"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
-                data["rol"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
-                data["username"].config(bg=ESTILOS["list_bg"], fg=ESTILOS["list_fg"])
+                data["frame"].config(bg=ESTILOS["bg_main"])
+                data["nombre"].config(bg=ESTILOS["bg_main"], fg=ESTILOS["list_fg"])
+                data["rol"].config(bg=ESTILOS["bg_main"], fg=ESTILOS["list_fg"])
+                data["username"].config(bg=ESTILOS["bg_main"], fg=ESTILOS["list_fg"])
 
             selected = self.row_widgets[index]
             selected["frame"].config(bg=ESTILOS["list_select_bg"])
@@ -298,6 +268,9 @@ class AdminView(BaseView):
         estado_base = tk.NORMAL if self.usuarios else tk.DISABLED
         self.btn_eliminar.config(state=estado_base)
         self.btn_editar.config(state=estado_base)
+        if not hasattr(self, 'selected_index'):
+            self.btn_editar.config(state=tk.DISABLED)
+            self.btn_eliminar.config(state=tk.DISABLED)
 
     def logout(self):
         SessionState.clear_user()
@@ -311,11 +284,11 @@ class AdminView(BaseView):
                 login_frame.clear_fields()
 
     def agregar_usuario(self):
-        self.mostrar_indicador_carga("Cargando formulario...")
-        self.after(200, self._mostrar_formulario_agregar)
+        self.mostrar_ventana_emergente()
 
     def eliminar_usuario(self):
-        if not hasattr(self, 'selected_index'): return
+        if not hasattr(self, 'selected_index'):
+            return
         index = self.selected_index
         user = self.usuarios[index]
         if messagebox.askyesno("Confirmar", f"¿Eliminar a {user['nombre']}?") and \
@@ -328,7 +301,8 @@ class AdminView(BaseView):
                 delattr(self, 'selected_index')
 
     def editar_usuario(self):
-        if not hasattr(self, 'selected_index'): return
+        if not hasattr(self, 'selected_index'):
+            return
         index = self.selected_index
         user = self.usuarios[index]
         self.show_edit_dialog(index, user["nombre"], user["rol"], user["username"])
@@ -350,270 +324,98 @@ class AdminView(BaseView):
 
     # --- Formularios ---
     def mostrar_ventana_emergente(self):
-        self.mostrar_indicador_carga("Cargando formulario...")
-        self.after(200, self._mostrar_formulario_agregar)
-
-    def _mostrar_formulario_agregar(self):
-        self.ocultar_indicador_carga()
         for widget in self.frame_content.winfo_children():
             widget.destroy()
 
-        form_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
+        form_frame = tk.Frame(self.frame_content, bg="white")
         form_frame.pack(fill="both", expand=True, padx=40, pady=30)
 
-        tk.Label(
-            form_frame,
-            text="Registrar nuevo usuario",
-            font=ESTILOS["font_title"],
-            bg=ESTILOS["bg_main"],
-            fg="#0D47A1"
-        ).grid(row=0, column=0, columnspan=2, pady=(0, 30))
+        fuente = ESTILOS["font_form"]
+        ancho_entry = 35
+        pady_campo = 25
 
-        campo_style = {
-            "font": ESTILOS["font_form"],
-            "width": 35,
-            "bg": "white",
-            "fg": "#333333",
-            "relief": "flat",
-            "highlightthickness": 2,
-            "highlightbackground": "#CCCCCC",
-            "highlightcolor": "#4CAF50",
-            "bd": 2
+        tk.Label(form_frame, text="Registrar nuevo usuario", font=ESTILOS["font_title"], bg="white").pack(pady=30)
+
+        tk.Label(form_frame, text="Nombre", font=fuente, bg="white").pack(pady=(pady_campo, 5))
+        entry_nombre = tk.Entry(form_frame, font=fuente, width=ancho_entry)
+        entry_nombre.pack()
+
+        tk.Label(form_frame, text="Apellido", font=fuente, bg="white").pack(pady=(pady_campo, 5))
+        entry_apellido = tk.Entry(form_frame, font=fuente, width=ancho_entry)
+        entry_apellido.pack()
+
+        tk.Label(form_frame, text="Contraseña", font=fuente, bg="white").pack(pady=(pady_campo, 5))
+        entry_contrasena = tk.Entry(form_frame, show="*", font=fuente, width=ancho_entry)
+        entry_contrasena.pack()
+
+        tk.Label(form_frame, text="Rol", font=fuente, bg="white").pack(pady=(pady_campo, 5))
+        rol_var = tk.StringVar(form_frame)
+        rol_var.set("Seleccionar rol")
+
+        opciones_rol = ["Administrador", "Operario"]
+        opciones_rol_enum = {
+            "Administrador": UserRole.ADMIN,
+            "Operario": UserRole.OPERATIVE
         }
 
-        pady_campo = 25
-        padx_label = 20
-
-        tk.Label(
-            form_frame, text="Nombre", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=1, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        entry_nombre = tk.Entry(form_frame, **campo_style)
-        entry_nombre.grid(row=1, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        tk.Label(
-            form_frame, text="Apellido", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=2, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        entry_apellido = tk.Entry(form_frame, **campo_style)
-        entry_apellido.grid(row=2, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        tk.Label(
-            form_frame, text="Contraseña", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=3, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        entry_contrasena = tk.Entry(form_frame, show="*", **campo_style)
-        entry_contrasena.grid(row=3, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        tk.Label(
-            form_frame, text="Rol", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=4, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        rol_var = tk.StringVar(form_frame, value="Seleccionar rol")
-        opciones_rol = ["Administrador", "Operario"]
         menu_rol = tk.OptionMenu(form_frame, rol_var, *opciones_rol)
-        menu_rol.config(**campo_style, anchor="w")
-        menu_rol.grid(row=4, column=1, padx=20, pady=pady_campo, ipady=10)
+        menu_rol.config(font=fuente, width=ancho_entry)
+        menu_rol.pack()
 
         def guardar_usuario():
             nombre = entry_nombre.get().strip()
             apellido = entry_apellido.get().strip()
             contrasena = entry_contrasena.get().strip()
-            rol_texto = rol_var.get()
-            rol = {"Administrador": UserRole.ADMIN, "Operario": UserRole.OPERATIVE}.get(rol_texto)
+            rol_texto = rol_var.get().strip()
+            rol = opciones_rol_enum.get(rol_texto, None)
 
-            if not all([nombre, apellido, contrasena]) or rol is None:
+            if not nombre or not apellido or not contrasena or rol is None:
                 messagebox.showerror("Error", "Completa todos los campos correctamente.")
                 return
 
             fingerprint_id = self.mostrar_ventana_biometrica()
-            if fingerprint_id is None or fingerprint_id < 0:
+            if fingerprint_id is None or (isinstance(fingerprint_id, int) and fingerprint_id < 0):
                 messagebox.showerror("Error", "No se pudo obtener la huella. Registro cancelado.")
                 return
 
             try:
-                self.admin_controller.create_user(firstName=nombre, lastName=apellido, password=contrasena, role=rol, fingerprintId=fingerprint_id)
+                self.admin_controller.create_user(
+                    firstName=nombre,
+                    lastName=apellido,
+                    password=contrasena,
+                    role=rol,
+                    fingerprintId=fingerprint_id
+                )
                 messagebox.showinfo("Éxito", f"Usuario registrado correctamente (huella #{fingerprint_id})")
                 self.usuarios = self.admin_controller.get_all_users()
                 self.volver_a_lista()
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo registrar el usuario:\n{e}")
 
-        button_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
-        button_frame.pack(pady=40)
+        tk.Button(
+            form_frame,
+            text="Guardar Usuario",
+            font=("Segoe UI", 30, "bold"),
+            bg=ESTILOS["btn_add_bg"],
+            fg="white",
+            height=2,
+            width=25,
+            relief="flat",
+            command=guardar_usuario
+        ).pack(pady=50)
 
-        BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=100,
-            radio=40,
-            texto="Guardar Usuario",
-            color_fondo=ESTILOS["btn_add_bg"],
-            color_hover=ESTILOS["btn_add_hover"],
-            color_texto="white",
-            font=("Segoe UI", 34, "bold"),
-            comando=guardar_usuario
-        ).grid(row=0, column=0, padx=30)
-
-        BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=100,
-            radio=40,
-            texto="Volver",
-            color_fondo="#9E9E9E",
-            color_hover="#757575",
-            color_texto="white",
-            font=("Segoe UI", 34, "bold"),
-            comando=self.volver_a_lista
-        ).grid(row=0, column=1, padx=30)
-
-    def show_edit_dialog(self, index, nombre_actual, rol_actual, username_actual):
-        self.mostrar_indicador_carga("Cargando datos...")
-        self.after(200, lambda: self._mostrar_formulario_editar(index, nombre_actual, rol_actual, username_actual))
-
-    def _mostrar_formulario_editar(self, index, nombre_actual, rol_actual, username_actual):
-        self.ocultar_indicador_carga()
-        for widget in self.frame_content.winfo_children():
-            widget.destroy()
-
-        tk.Label(
-            self.frame_content,
-            text="Editar Usuario",
-            font=ESTILOS["font_title"],
-            bg=ESTILOS["bg_main"],
-            fg="#0D47A1"
+        tk.Button(
+            form_frame,
+            text="Volver",
+            font=("Segoe UI", 26),
+            bg=ESTILOS["btn_del_bg"],
+            fg="white",
+            height=2,
+            width=25,
+            relief="flat",
+            command=self.volver_a_lista
         ).pack(pady=20)
 
-        form_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
-        form_frame.pack(pady=30)
-
-        partes = nombre_actual.split(" ", 1)
-        first_name_default = partes[0]
-        last_name_default = partes[1] if len(partes) > 1 else ""
-
-        campo_style = {
-            "font": ESTILOS["font_form"],
-            "width": 35,
-            "bg": "white",
-            "fg": "#333333",
-            "relief": "flat",
-            "highlightthickness": 2,
-            "highlightbackground": "#CCCCCC",
-            "highlightcolor": "#4CAF50",
-            "bd": 2
-        }
-
-        pady_campo = 25
-        padx_label = 20
-
-        tk.Label(
-            form_frame, text="Nombre:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=0, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        entry_first_name = tk.Entry(form_frame, **campo_style)
-        entry_first_name.insert(0, first_name_default)
-        entry_first_name.grid(row=0, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        tk.Label(
-            form_frame, text="Apellido:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=1, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        entry_last_name = tk.Entry(form_frame, **campo_style)
-        entry_last_name.insert(0, last_name_default)
-        entry_last_name.grid(row=1, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        tk.Label(
-            form_frame, text="Rol:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=2, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        rol_var = tk.StringVar(form_frame, value="Seleccionar rol")
-        rol_enum_to_text = {"admin": "Administrador", "operative": "Operario"}
-        rol_var.set(rol_enum_to_text.get(rol_actual, "Seleccionar rol"))
-        opciones_rol = ["Administrador", "Operario"]
-        menu_rol = tk.OptionMenu(form_frame, rol_var, *opciones_rol)
-        menu_rol.config(**campo_style, anchor="w")
-        menu_rol.grid(row=2, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        tk.Label(
-            form_frame, text="Usuario:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=3, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        entry_username = tk.Entry(form_frame, **campo_style)
-        entry_username.insert(0, username_actual)
-        entry_username.grid(row=3, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        tk.Label(
-            form_frame, text="Nueva Clave (opcional):", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"], fg="#333333"
-        ).grid(row=4, column=0, sticky="e", padx=padx_label, pady=pady_campo)
-        entry_password = tk.Entry(form_frame, show="*", **campo_style)
-        entry_password.grid(row=4, column=1, padx=20, pady=pady_campo, ipady=10)
-
-        button_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
-        button_frame.pack(pady=40)
-
-        def guardar():
-            first_name = entry_first_name.get().strip()
-            last_name = entry_last_name.get().strip()
-            new_rol_text = rol_var.get()
-            new_username = entry_username.get().strip()
-            new_password = entry_password.get().strip()
-
-            if not first_name or not new_username:
-                messagebox.showwarning("Campos vacíos", "Nombre y usuario son obligatorios.")
-                return
-
-            text_to_enum = {"Administrador": UserRole.ADMIN, "Operario": UserRole.OPERATIVE}
-            new_rol = text_to_enum.get(new_rol_text)
-            if new_rol is None:
-                messagebox.showwarning("Rol inválido", "Seleccione un rol válido.")
-                return
-
-            user_id = self.usuarios[index]["id"]
-            try:
-                self.admin_controller.update_user(user_id, first_name, last_name, new_rol, new_username, new_password if new_password else None)
-                messagebox.showinfo("Éxito", "Usuario actualizado correctamente")
-                self.usuarios = self.admin_controller.get_all_users()
-                self.volver_a_lista()
-            except Exception as e:
-                messagebox.showerror("Error", f"No se pudo actualizar el usuario:\n{e}")
-
-        BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=100,
-            radio=40,
-            texto="Guardar Cambios",
-            color_fondo=ESTILOS["btn_add_bg"],
-            color_hover=ESTILOS["btn_add_hover"],
-            color_texto="white",
-            font=("Segoe UI", 34, "bold"),
-            comando=guardar
-        ).grid(row=0, column=0, padx=30)
-
-        BotonRedondeado(
-            parent=button_frame,
-            width=400,
-            height=100,
-            radio=40,
-            texto="Volver",
-            color_fondo="#9E9E9E",
-            color_hover="#757575",
-            color_texto="white",
-            font=("Segoe UI", 34, "bold"),
-            comando=self.volver_a_lista
-        ).grid(row=0, column=1, padx=30)
-
-    # --- Indicador de carga ---
-    def mostrar_indicador_carga(self, mensaje="Cargando..."):
-        self.loading_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
-        self.loading_frame.place(relx=0.5, rely=0.5, anchor="center")
-        tk.Label(
-            self.loading_frame,
-            text=mensaje,
-            font=("Segoe UI", 24),
-            bg=ESTILOS["bg_main"],
-            fg="#0D47A1"
-        ).pack(pady=20)
-        self.update_idletasks()
-
-    def ocultar_indicador_carga(self):
-        if hasattr(self, 'loading_frame') and self.loading_frame.winfo_exists():
-            self.loading_frame.destroy()
-
-    # --- Biometría (sin cambios) ---
     def mostrar_ventana_biometrica(self) -> int | None:
         ventana = tk.Toplevel(self)
         ventana.title("Captura de huella")
@@ -676,6 +478,97 @@ class AdminView(BaseView):
         print(f'huella registrada #{fingerprintId}')
         return fingerprintId
 
+    def show_edit_dialog(self, index, nombre_actual, rol_actual, username_actual):
+        for widget in self.frame_content.winfo_children():
+            widget.destroy()
+
+        tk.Label(self.frame_content, text="Editar Usuario", font=ESTILOS["font_title"], bg=ESTILOS["bg_main"]).pack(pady=20)
+
+        form_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
+        form_frame.pack(pady=30)
+
+        partes = nombre_actual.split(" ", 1)
+        first_name_default = partes[0]
+        last_name_default = partes[1] if len(partes) > 1 else ""
+
+        tk.Label(form_frame, text="Nombre:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=0, column=0, sticky="e", padx=20, pady=10)
+        entry_first_name = tk.Entry(form_frame, font=ESTILOS["font_form"])
+        entry_first_name.insert(0, first_name_default)
+        entry_first_name.grid(row=0, column=1, padx=20, pady=10)
+
+        tk.Label(form_frame, text="Apellido:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=1, column=0, sticky="e", padx=20, pady=10)
+        entry_last_name = tk.Entry(form_frame, font=ESTILOS["font_form"])
+        entry_last_name.insert(0, last_name_default)
+        entry_last_name.grid(row=1, column=1, padx=20, pady=10)
+
+        tk.Label(form_frame, text="Rol", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=2, column=0, sticky='e', padx=20, pady=10)
+        rol_var = tk.StringVar(form_frame)
+        rol_var.set("Seleccionar rol")
+
+        opciones_rol = ["Administrador", "Operario"]
+        opciones_rol_enum = {
+            "Administrador": UserRole.ADMIN,
+            "Operario": UserRole.OPERATIVE
+        }
+
+        menu_rol = tk.OptionMenu(form_frame, rol_var, *opciones_rol)
+        menu_rol.config(font=ESTILOS["font_form"])
+        menu_rol.grid(row=2, column=1, padx=20, pady=10)
+
+        tk.Label(form_frame, text="Usuario:", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=3, column=0, sticky="e", padx=20, pady=10)
+        entry_username = tk.Entry(form_frame, font=ESTILOS["font_form"])
+        entry_username.insert(0, username_actual)
+        entry_username.grid(row=3, column=1, padx=20, pady=10)
+
+        tk.Label(form_frame, text="Nueva Clave (opcional):", font=ESTILOS["font_form"], bg=ESTILOS["bg_main"]).grid(row=4, column=0, sticky="e", padx=20, pady=10)
+        entry_password = tk.Entry(form_frame, font=ESTILOS["font_form"], show="*")
+        entry_password.grid(row=4, column=1, padx=20, pady=10)
+
+        button_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
+        button_frame.pack(pady=30)
+
+        def guardar():
+            first_name = entry_first_name.get().strip()
+            last_name = entry_last_name.get().strip()
+            new_rol = opciones_rol_enum[rol_var.get()]
+            new_username = entry_username.get().strip()
+            new_password = entry_password.get().strip()
+
+            if not first_name or not new_rol or not new_username:
+                messagebox.showwarning("Campos vacíos", "Nombre, rol y usuario son obligatorios.")
+                return
+
+            user_id = self.usuarios[index]["id"]
+            self.admin_controller.update_user(user_id, first_name, last_name, new_rol, new_username, new_password if new_password else None)
+
+            self.usuarios = self.admin_controller.get_all_users()
+            self.volver_a_lista()
+
+        BotonRedondeado(
+            parent=button_frame,
+            width=300,
+            height=90,
+            radio=40,
+            texto="Guardar Cambios",
+            color_fondo=ESTILOS["btn_add_bg"],
+            color_hover=ESTILOS["btn_add_hover"],
+            color_texto="white",
+            font=("Segoe UI", 32, "bold"),
+            comando=guardar
+        ).grid(row=0, column=0, padx=20)
+
+        BotonRedondeado(
+            parent=button_frame,
+            width=300,
+            height=90,
+            radio=40,
+            texto="Volver",
+            color_fondo="#9E9E9E",
+            color_hover="#757575",
+            color_texto="white",
+            font=("Segoe UI", 32, "bold"),
+            comando=self.volver_a_lista
+        ).grid(row=0, column=1, padx=20)
 
 # ==============================================================================
 # Botón redondeado personalizado
