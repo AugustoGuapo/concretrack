@@ -6,7 +6,8 @@ from app.ui.controllers.results_controller import ResultsController
 from app.state.session_state import SessionState
 from app.state.sample_state import SampleState
 from app.ui.forms.base_view import BaseView
-from PIL import Image, ImageTk
+import os
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 from PIL.Image import Resampling
 
 # Estilos coherentes con AdminView
@@ -72,29 +73,48 @@ class ResultsForm(BaseView):
         separator.pack(fill="x", pady=(0, 10))
 
     def _crear_body(self):
-        self.body = tk.Frame(self, bg=ESTILOS["bg_main"])
-        self.body.pack(expand=True, fill="both", padx=40, pady=30)
+        # Frame contenedor principal con scroll
+        container = tk.Frame(self, bg=ESTILOS["bg_main"])
+        container.pack(expand=True, fill="both", padx=40, pady=(0, 20))
+
+        # Canvas con scroll
+        canvas = tk.Canvas(container, bg=ESTILOS["bg_main"], highlightthickness=0)
+        scrollbar = tk.Scrollbar(container, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg=ESTILOS["bg_main"])
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
         # Texto descriptivo
-        self.lbl_family = tk.Label(
-            self.body,
+        lbl_family = tk.Label(
+            scrollable_frame,
             text=f"Registrando resultados para familia: {self.resultController.getFamilyNameById(self.family)} a los {self.days} días",
             font=("Segoe UI", 24),
             bg=ESTILOS["bg_main"],
             fg="#333333"
         )
-        self.lbl_family.pack(pady=(10, 30))
+        lbl_family.pack(pady=(30, 30))
 
-        # Frame contenedor principal (teclado + tipos)
-        main_frame = tk.Frame(self.body, bg=ESTILOS["bg_main"])
+        # Frame principal (teclado + tipos)
+        main_frame = tk.Frame(scrollable_frame, bg=ESTILOS["bg_main"])
         main_frame.pack(fill="x", pady=(0, 20))
 
-        # Frame del teclado numérico (izquierda)
-        keypad_frame = tk.Frame(main_frame, bg=ESTILOS["bg_main"])
-        keypad_frame.pack(side="left", padx=(0, 20))
+        main_frame.grid_columnconfigure(0, weight=1)
+        main_frame.grid_columnconfigure(1, weight=1)
 
-        # Campo de entrada (encima del teclado) → ahora con grid
-        self.entry_valor = tk.Entry(
+        # Teclado numérico (izquierda)
+        keypad_frame = tk.Frame(main_frame, bg=ESTILOS["bg_main"])
+        keypad_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
+
+        entry_valor = tk.Entry(
             keypad_frame,
             font=("Segoe UI", 30),
             width=20,
@@ -108,14 +128,11 @@ class ResultsForm(BaseView):
             insertbackground="#FFFFFF",
             state="readonly"
         )
-        self.entry_valor.grid(row=0, column=0, columnspan=3, padx=5, pady=(0, 10), ipady=15, sticky="ew")
+        entry_valor.grid(row=0, column=0, columnspan=3, padx=5, pady=(0, 10), ipady=15, sticky="ew")
 
-        # Configurar columna para que se expanda
-        keypad_frame.grid_columnconfigure(0, weight=1)
-        keypad_frame.grid_columnconfigure(1, weight=1)
-        keypad_frame.grid_columnconfigure(2, weight=1)
+        for col in range(3):
+            keypad_frame.grid_columnconfigure(col, weight=1)
 
-        # Teclado numérico con grid
         buttons = [
             ['7', '8', '9'],
             ['4', '5', '6'],
@@ -139,62 +156,77 @@ class ResultsForm(BaseView):
                 )
                 btn.grid(row=i+1, column=j, padx=5, pady=5, sticky="nsew")
 
-        # Frame de tipos de fractura (derecha)
+        # Tipos de fractura (derecha) - en cuadrícula 2x3
         types_frame = tk.Frame(main_frame, bg=ESTILOS["bg_main"])
-        types_frame.pack(side="right", padx=(20, 0))
+        types_frame.grid(row=0, column=1, sticky="nsew", padx=(20, 0))
 
-        # Título de tipos
+        # Título con grid
         tk.Label(
             types_frame,
             text="Tipo de Fractura:",
             font=("Segoe UI", 24, "bold"),
             bg=ESTILOS["bg_main"],
             fg="#333333"
-        ).pack(pady=(0, 10))
+        ).grid(row=0, column=0, columnspan=2, pady=(0, 10))
 
-        # Botones de tipos (solo uno seleccionable)
-        self.type_buttons = []
-        tipos = ["Tipo 1", "Tipo 2", "Tipo 3", "Tipo 4", "Tipo 5", "Tipo 6"]
-        
-                # Cargar imágenes
+        # Cargar imágenes
         self.type_images = []
+        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+        IMG_DIR = os.path.join(BASE_DIR, "..", "images")
+
         for i in range(1, 7):
             try:
-                img_path = f"images/Tipo{i}.png"
+                img_path = os.path.join(IMG_DIR, f"Tipo{i}.png")
                 img = Image.open(img_path)
-                # Redimensionar con BICUBIC (compatible con todas las versiones de Pillow)
-                img = img.resize((60, 60), Resampling.LANCZOS)
+                if hasattr(Image, 'Resampling'):
+                    img = img.resize((100, 100), Resampling.BICUBIC)
+                #else:
+                #    img = img.resize((100, 100), Image.ANTIALIAS)
                 photo = ImageTk.PhotoImage(img)
                 self.type_images.append(photo)
             except Exception as e:
                 print(f"No se pudo cargar {img_path}: {e}")
-                # Placeholder blanco
-                img = Image.new("RGB", (60, 60), "white")
+                img = Image.new("RGB", (100, 100), "white")
+                d = ImageDraw.Draw(img)
+                d.text((5, 20), "Sin Imagen", fill="black")
                 photo = ImageTk.PhotoImage(img)
                 self.type_images.append(photo)
 
-        # Botones de tipos (solo uno seleccionable) con imágenes
+        # Botones en cuadrícula 2x3
+        self.type_buttons = []
+        tipos = ["Tipo 1", "Tipo 2", "Tipo 3", "Tipo 4", "Tipo 5", "Tipo 6"]
+
         for i, tipo in enumerate(tipos):
+            row = (i // 2) + 1  # +1 porque el título está en row=0
+            col = i % 2
+
             btn = tk.Button(
                 types_frame,
                 text=tipo,
-                image=self.type_images[i],  # 👈 Imagen
-                compound="top",           # Texto arriba de la imagen
+                image=self.type_images[i],
+                compound="top",
                 font=("Segoe UI", 20, "bold"),
                 bg="#E0E0E0",
                 fg="#000000",
-                width=150,               # Ancho mayor para imagen + texto
-                height=100,              # Alto mayor
+                width=150,
+                height=150,
                 relief="raised",
                 bd=2,
                 command=lambda t=tipo: self._select_type(t)
             )
-            btn.pack(pady=5, fill="x")
+            btn.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
             self.type_buttons.append(btn)
 
-        # Botón Guardar (centrado debajo)
+        # Guardar referencia
+        self.entry_valor = entry_valor
+        self.lbl_family = lbl_family
+
+        # Botón Guardar (fuera del scroll, fijo en la parte inferior)
+        footer = tk.Frame(self, bg=ESTILOS["bg_main"], height=100)
+        footer.pack(fill="x", side="bottom", pady=(0, 20))
+
         btn_guardar = BotonRedondeado(
-            parent=self.body,
+            parent=footer,
             width=400,
             height=80,
             radio=40,
@@ -205,7 +237,7 @@ class ResultsForm(BaseView):
             font=("Segoe UI", 32, "bold"),
             comando=self._guardar
         )
-        btn_guardar.pack(pady=30)
+        btn_guardar.pack(pady=10)
 
     def _crear_footer(self):
         footer = tk.Frame(self, bg=ESTILOS["bg_main"], height=40)
