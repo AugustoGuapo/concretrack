@@ -30,7 +30,7 @@ class ResultsForm(BaseView):
         sample = SampleState.get_sample()
         self.member_id = sample.id
         self.family = sample.family_id
-        self.days = 155
+        self.days = sample.fracture_days
         self.view_controller = view_controller
         self.username = SessionState.get_user().getFullName() if SessionState.get_user() else "Invitado"
         self.body = None
@@ -78,7 +78,7 @@ class ResultsForm(BaseView):
         # Texto descriptivo
         self.lbl_family = tk.Label(
             self.body,
-            text=f"Registrando resultados para familia: {self.family} a los {self.days} días",
+            text=f"Registrando resultados para familia: {self.resultController.getFamilyNameById(self.family)} a los {self.days} días",
             font=("Segoe UI", 24),
             bg=ESTILOS["bg_main"],
             fg="#333333"
@@ -298,7 +298,9 @@ class ResultsForm(BaseView):
         self.family = sample.family_id
         self.member_id = sample.id
         if hasattr(self, 'lbl_family') and self.lbl_family:
-            self.lbl_family.config(text=f"Registrando resultados para familia: {self.family} a los {self.days} días")
+            self.lbl_family.config(
+                text=f"Registrando resultados para familia: {self.resultController.getFamilyNameById(self.family)} a los {self.days} días"
+            )
 
 # ==============================================================================
 # Botón redondeado personalizado

@@ -10,7 +10,7 @@ class AdminController:
     def __init__(self):
         self.auth_service = AuthenticationService(UserRepositoryImpl(), BcryptHasherImpl())
         self.user_repo = UserRepositoryImpl()  # acceso directo al repositorio
-        self.fingerprint_service = FingerprintImpl()
+        self.fingerprint_service = None #FingerprintImpl()
 
     # Crear usuario (con o sin huella)
     def create_user(self, firstName, lastName, password, role, fingerprintId=None):

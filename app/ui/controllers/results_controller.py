@@ -10,3 +10,6 @@ class ResultsController:
             return {"status": "success", "message": "Results saved successfully."}
         except ValueError as e:
             return {"status": "error", "message": str(e)}
+        
+    def getFamilyNameById(self, familyId: int) -> str:
+        return self.results_service.getFamilyNameById(familyId)
