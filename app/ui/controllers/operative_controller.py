@@ -9,7 +9,7 @@ from app.state.session_state import SessionState
 class OperativeController:
     def __init__(self):
         self.samples_service = SamplesService(MemberRepository(), FamilyRepository())
-        self.fingerprintSensor = None #FingerprintSensor()
+        self.fingerprintSensor = FingerprintSensor()
 
     def get_samples(self) -> list[Member]:
         """Fetches the list of samples from the service."""
