@@ -416,7 +416,7 @@ class AdminView(BaseView):
             command=self.volver_a_lista
         ).pack(pady=20)
 
-    def mostrar_ventana_biometrica(self) -> int | None:
+    def mostrar_ventana_biometrica(self) -> int:
         ventana = tk.Toplevel(self)
         ventana.title("Captura de huella")
         ventana.transient(self.winfo_toplevel())
