@@ -194,12 +194,37 @@ class App(BaseView):
         self.contenido_actual = frame_biometria
 
     def iniciar_sesion_biometrico(self):
-        messagebox.showinfo(
-            "Huella digital",
-            "La autenticación por huella digital está desactivada temporalmente.\n"
-            "Por favor, inicie sesión con usuario y contraseña."
-        )
-        self.alternar_login()
+        try:
+            # Intentar autenticación biométrica
+            if self.controller.fingerPrintLogin():
+                user = self.session.get_user()
+                if user.role == UserRole.OPERATIVE:
+                    self.view_controller.show_frame("SampleListFrame")
+                    return
+                elif user.role == UserRole.ADMIN:
+                    self.view_controller.show_frame("AdminView")
+                    return
+            else:
+                # Huella no reconocida o no registrada
+                messagebox.showwarning(
+                    "Huella no reconocida",
+                    "No se encontró una huella dactilar registrada.\n"
+                    "Por favor, inténtelo nuevamente o use usuario y contraseña."
+                )
+                # Opcional: podrías alternar automáticamente aquí, pero mejor dar opción
+                return
+
+        except Exception as e:
+            # Cualquier error de hardware, conexión, inicialización, etc.
+            print(f"Error en autenticación biométrica: {e}")
+            messagebox.showerror(
+                "Sensor no disponible",
+                "No se pudo acceder al lector de huellas.\n"
+                "La autenticación por huella no está disponible en este momento.\n\n"
+                "Se cambiará al modo de usuario y contraseña."
+            )
+            # Cambiar automáticamente al modo credenciales
+            self.alternar_login()
 
     def mostrar_credenciales(self):
         frame_credenciales = tk.Frame(self.frame_form_fill, bg='#fcfcfc')
