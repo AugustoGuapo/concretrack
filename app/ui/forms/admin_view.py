@@ -443,6 +443,7 @@ class AdminView(BaseView):
                 isAble = self.admin_controller.capture_fingerprint()
             except Exception as e:
                 texto_instruccion.set("Huella registrada con otro usuario o error. Use otra huella.")
+                print(e)
                 ventana.update()
                 time.sleep(1.5)
                 ventana.destroy()
