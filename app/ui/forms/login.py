@@ -180,6 +180,7 @@ class App(BaseView):
             command=self.iniciar_sesion_biometrico
         )
         boton_huella.image = self.huella_img
+    
         boton_huella.pack(pady=20)
 
         titulo = tk.Label(
@@ -262,8 +263,8 @@ class App(BaseView):
             self.keyboard = VirtualKeyboard(self.frame_form_fill)
 
         # 🔽 Vincular teclado con campos al enfocar
-        self.usuario.bind("<FocusIn>", lambda e: self.keyboard.set_active_entry(self.usuario))
-        self.password.bind("<FocusIn>", lambda e: self.keyboard.set_active_entry(self.password))
+        self.usuario.bind("<FocusIn>", lambda e: self.keyboard and self.keyboard.set_active_entry(self.usuario))
+        self.password.bind("<FocusIn>", lambda e: self.keyboard and self.keyboard.set_active_entry(self.password))
 
         # Mostrar teclado
         self.keyboard.show()
