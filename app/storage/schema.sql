@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS families (
     classification INTEGER,
     client_id INTEGER NOT NULL,
     project_id INTEGER NOT NULL,
+    design_resistance REAL,
     FOREIGN KEY (client_id) REFERENCES clients(id),
     FOREIGN KEY (project_id) REFERENCES projects(id)
 );

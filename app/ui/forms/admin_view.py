@@ -425,7 +425,7 @@ class AdminView(BaseView):
             for entry in [entry_nombre, entry_apellido, entry_contrasena]:
                 entry.bind("<FocusIn>", lambda e, ent=entry: self.virtual_keyboard and self.virtual_keyboard.set_active_entry(ent))
 
-    def mostrar_ventana_biometrica(self) -> int | None:
+    def mostrar_ventana_biometrica(self) -> int:
         ventana = tk.Toplevel(self)
         ventana.title("Captura de huella")
         ventana.transient(self.winfo_toplevel())
@@ -452,6 +452,7 @@ class AdminView(BaseView):
                 isAble = self.admin_controller.capture_fingerprint()
             except Exception as e:
                 texto_instruccion.set("Huella registrada con otro usuario o error. Use otra huella.")
+                print(e)
                 ventana.update()
                 time.sleep(1.5)
                 ventana.destroy()

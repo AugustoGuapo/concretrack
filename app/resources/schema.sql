@@ -31,11 +31,12 @@ CREATE TABLE IF NOT EXISTS families (
     height REAL,
     classification INTEGER,
     client_id INTEGER,   -- Puede ser NULL
-    project_id INTEGER   -- Puede ser NULL
+    project_id INTEGER,   -- Puede ser NULL
+    design_resistance REAL
 );
 
 -- Tabla: samples
-CREATE TABLE IF NOT EXISTS samples (
+CREATE TABLE IF NOT EXISTS members (
     id INTEGER PRIMARY KEY,
     family_id INTEGER,   -- Puede ser NULL
     date_of_fracture TEXT,  -- Fecha como texto (YYYY-MM-DD)
