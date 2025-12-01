@@ -13,9 +13,7 @@ class FingerprintSensor():
 class FingerprintSensor():
 
     """
-    Clase que encapsula la lógica del sensor de huellas AS608 usando la librería pyfingerprint.
-    Ofrece métodos para capturar, verificar, registrar y limpiar datos de huellas dactilares.
-    """
+
     def __init__(self):
         """
         Inicializa la conexión con el sensor y define los buffers de trabajo.
