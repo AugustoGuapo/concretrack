@@ -26,7 +26,7 @@ class SampleListFrame(BaseView):
         self.operative_controller = OperativeController()
         self.view_controller = view_controller
         self.green_color = "#00FF00"
-        self.yellow_color = "#FFD700"
+        self.pending_color = "black"
 
         self.config(bg=ESTILOS["bg_main"])
         self.create_header()
@@ -110,7 +110,7 @@ class SampleListFrame(BaseView):
             row_frame.pack(fill=tk.X, padx=10, pady=5)
             row_frame.pack_propagate(False)
 
-            color = self.green_color if member.result is not None else self.yellow_color
+            color = self.green_color if member.result is not None else self.pending_color
             lbl_item = tk.Label(
                 row_frame,
                 text=f"● {member.id}",

@@ -1,12 +1,16 @@
 # app/ui/forms/admin_view.py
 
 import tkinter as tk
-import tkinter.messagebox as messagebox
+import tkinter.messagebox as messagebox  # ✅ Corregido: message**box**, no message**obby**
 from app.ui.controllers.admin_controller import AdminController
 from app.ui.forms.base_view import BaseView
 from app.models.user_role import UserRole
 from app.state.session_state import SessionState
 import time
+
+# 🔽 Importamos el teclado virtual
+from app.ui.components.virtual_keyboard import VirtualKeyboard
+
 
 # ----------------- Estilos globales -----------------
 ESTILOS = {
@@ -30,6 +34,7 @@ ESTILOS = {
     "font_form": ("Segoe UI", 28),
 }
 
+
 class AdminView(BaseView):
     def __init__(self, parent, view_controller):
         super().__init__(parent)
@@ -39,7 +44,8 @@ class AdminView(BaseView):
             "admin": "Administrador",
             "operative": "Operario"
         }
-        self.row_widgets = []  # Inicializado aquí
+        self.row_widgets = []
+        self.virtual_keyboard = None  # ←←← Teclado virtual (solo en formularios)
 
         self.config(bg=ESTILOS["bg_main"])
         self.create_header()
@@ -132,32 +138,25 @@ class AdminView(BaseView):
         self.btn_editar.grid(row=0, column=2, padx=25)
 
     def create_user_list(self):
-        # Frame contenedor para la lista
         list_frame = tk.Frame(self.frame_content, bg=ESTILOS["bg_main"])
         list_frame.pack(fill="x", padx=40, pady=(20, 30))
 
-        # Línea horizontal debajo de los botones
         separator = tk.Frame(list_frame, bg="#DDDDDD", height=2)
         separator.pack(fill="x", pady=(0, 10))
 
-        # Contenedor de filas
         self.rows_container = tk.Frame(list_frame, bg=ESTILOS["bg_main"])
         self.rows_container.pack(fill="x")
 
-        # Cargar datos
         self.usuarios = self.admin_controller.get_all_users()
         self.actualizar_lista()
         self.validar_estado_botones()
 
     def actualizar_lista(self):
-        # Limpiar filas anteriores
         for widget in self.rows_container.winfo_children():
             widget.destroy()
         self.row_widgets.clear()
 
-        # Verificar que haya usuarios
         if not self.usuarios:
-            # Mostrar mensaje si no hay usuarios
             tk.Label(
                 self.rows_container,
                 text="No hay usuarios registrados.",
@@ -180,16 +179,14 @@ class AdminView(BaseView):
             rol = rol_texto
             username = usuario.get('username', '')
 
-            # Frame de la fila con altura fija
             row_frame = tk.Frame(
                 self.rows_container,
                 bg=ESTILOS["bg_main"],
-                height=80  # Altura fija
+                height=80
             )
             row_frame.pack(fill="x", pady=5)
             row_frame.pack_propagate(False)
 
-            # Nombre: izquierda
             lbl_nombre = tk.Label(
                 row_frame,
                 text=nombre.ljust(w1),
@@ -200,7 +197,6 @@ class AdminView(BaseView):
             )
             lbl_nombre.place(x=0, rely=0.5, anchor="w")
 
-            # Rol: centro
             lbl_rol = tk.Label(
                 row_frame,
                 text=rol.ljust(w2),
@@ -211,7 +207,6 @@ class AdminView(BaseView):
             )
             lbl_rol.place(relx=0.5, rely=0.5, anchor="center")
 
-            # Usuario: derecha
             lbl_username = tk.Label(
                 row_frame,
                 text=username.ljust(w3),
@@ -222,7 +217,6 @@ class AdminView(BaseView):
             )
             lbl_username.place(relx=1.0, rely=0.5, anchor="e")
 
-            # Guardar datos de la fila
             row_data = {
                 "frame": row_frame,
                 "nombre": lbl_nombre,
@@ -232,7 +226,6 @@ class AdminView(BaseView):
             }
             self.row_widgets.append(row_data)
 
-            # Vincular clic al frame completo
             def make_handler(idx):
                 return lambda e: self.select_row(idx)
             row_frame.bind("<Button-1>", make_handler(i))
@@ -308,6 +301,9 @@ class AdminView(BaseView):
         self.show_edit_dialog(index, user["nombre"], user["rol"], user["username"])
 
     def volver_a_lista(self):
+        if self.virtual_keyboard:
+            self.virtual_keyboard.hide()
+
         for widget in self.frame_content.winfo_children():
             widget.destroy()
         self.create_buttons()
@@ -322,7 +318,7 @@ class AdminView(BaseView):
                     w.config(text="Invitado")
         self.volver_a_lista()
 
-    # --- Formularios ---
+    # --- Formulario: Registrar ---
     def mostrar_ventana_emergente(self):
         for widget in self.frame_content.winfo_children():
             widget.destroy()
@@ -387,13 +383,16 @@ class AdminView(BaseView):
                     fingerprintId=fingerprint_id
                 )
                 messagebox.showinfo("Éxito", f"Usuario registrado correctamente (huella #{fingerprint_id})")
-                self.usuarios = self.admin_controller.get_all_users()
                 self.volver_a_lista()
             except Exception as e:
                 messagebox.showerror("Error", f"No se pudo registrar el usuario:\n{e}")
 
+        # Botones
+        button_frame = tk.Frame(form_frame, bg="white")
+        button_frame.pack(pady=30)
+
         tk.Button(
-            form_frame,
+            button_frame,
             text="Guardar Usuario",
             font=("Segoe UI", 30, "bold"),
             bg=ESTILOS["btn_add_bg"],
@@ -402,10 +401,10 @@ class AdminView(BaseView):
             width=25,
             relief="flat",
             command=guardar_usuario
-        ).pack(pady=50)
+        ).pack(pady=10)
 
         tk.Button(
-            form_frame,
+            button_frame,
             text="Volver",
             font=("Segoe UI", 26),
             bg=ESTILOS["btn_del_bg"],
@@ -414,7 +413,17 @@ class AdminView(BaseView):
             width=25,
             relief="flat",
             command=self.volver_a_lista
-        ).pack(pady=20)
+        ).pack(pady=10)
+
+        # ←←← Teclado virtual
+        if self.virtual_keyboard is None:
+            self.virtual_keyboard = VirtualKeyboard(self.frame_content)
+        self.virtual_keyboard.show()
+
+        # ←←← Vinculación SEGURA a los campos
+        if self.virtual_keyboard:
+            for entry in [entry_nombre, entry_apellido, entry_contrasena]:
+                entry.bind("<FocusIn>", lambda e, ent=entry: self.virtual_keyboard and self.virtual_keyboard.set_active_entry(ent))
 
     def mostrar_ventana_biometrica(self) -> int:
         ventana = tk.Toplevel(self)
@@ -479,6 +488,7 @@ class AdminView(BaseView):
         print(f'huella registrada #{fingerprintId}')
         return fingerprintId
 
+    # --- Formulario: Editar ---
     def show_edit_dialog(self, index, nombre_actual, rol_actual, username_actual):
         for widget in self.frame_content.winfo_children():
             widget.destroy()
@@ -542,7 +552,6 @@ class AdminView(BaseView):
             user_id = self.usuarios[index]["id"]
             self.admin_controller.update_user(user_id, first_name, last_name, new_rol, new_username, new_password if new_password else None)
 
-            self.usuarios = self.admin_controller.get_all_users()
             self.volver_a_lista()
 
         BotonRedondeado(
@@ -570,6 +579,17 @@ class AdminView(BaseView):
             font=("Segoe UI", 32, "bold"),
             comando=self.volver_a_lista
         ).grid(row=0, column=1, padx=20)
+
+        # ←←← Teclado virtual en edición
+        if self.virtual_keyboard is None:
+            self.virtual_keyboard = VirtualKeyboard(self.frame_content)
+        self.virtual_keyboard.show()
+
+        # ←←← Vinculación SEGURA a los campos
+        if self.virtual_keyboard:
+            for entry in [entry_first_name, entry_last_name, entry_username, entry_password]:
+                entry.bind("<FocusIn>", lambda e, ent=entry: self.virtual_keyboard and self.virtual_keyboard.set_active_entry(ent))
+
 
 # ==============================================================================
 # Botón redondeado personalizado
